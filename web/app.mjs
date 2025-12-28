@@ -16,9 +16,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', (req, res) => {
-    res.send('Servidor de Gimnasio Toji funcionando ');
-});
+import viewRoutes from './routes/views.routes.mjs';
+app.use('/', viewRoutes);
+
 
 app.listen(PORT, () => {
     console.log(`Servidor en ${PORT}`);
