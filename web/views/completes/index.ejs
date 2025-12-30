@@ -2,8 +2,46 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <h1>Home</h1>
-    <p>Bienvenido a Toji. Aquí verás tu progreso.</p>
+    <div class="header-section">
+        <h1>Bienvenido a TOJI</h1>
+        <p class="workout-meta">Tu progreso hoy es tu victoria mañana.</p>
+    </div>
+
+    <div class="stats-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+        <div class="workout-card" style="margin-bottom: 0; text-align: center;">
+            <h3 style="color: var(--accent-color);">12</h3>
+            <p class="workout-meta">Entrenos Mes</p>
+        </div>
+        <div class="workout-card" style="margin-bottom: 0; text-align: center;">
+            <h3 style="color: var(--accent-color);">75%</h3>
+            <p class="workout-meta">Meta Semanal</p>
+        </div>
+    </div>
+
+    <h2 style="margin-bottom: 15px;">Actividad Reciente</h2>
+
+    <div class="workout-card">
+        <div class="workout-header">
+            <span class="workout-title">Sesión de Pierna Completa</span>
+            <span class="workout-meta">Hace 2 horas</span>
+        </div>
+        <div class="workout-details">
+            <p>Sentadilla: 4 x 10 (80kg)</p>
+            <p>Prensa: 3 x 12 (120kg)</p>
+        </div>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; display: flex; gap: 15px;">
+            <span>❤️ 12</span>
+            <span>💬 3</span>
+        </div>
+    </div>
+
+    <div class="workout-card">
+        <div class="workout-header">
+            <span class="workout-title">Rutina de Tracción (Pull)</span>
+            <span class="workout-meta">Ayer</span>
+        </div>
+        <p class="workout-meta">Dominadas, Remo con barra, Biceps</p>
+    </div>
 </main>
 
 <%- include('../partials/footer') %>
