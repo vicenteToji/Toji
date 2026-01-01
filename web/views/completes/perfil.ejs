@@ -3,11 +3,82 @@
 
 <main class="content">
     <h1>Mi Perfil</h1>
-    <div class="workout-card">
-        <p>Nombre de usuario: <strong>Usuario Antigravity</strong></p>
-        <p>Email: <strong>ejemplo@gym.com</strong></p>
+    
+    <div class="workout-card" style="text-align: center;">
+        <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
+        <h2>Usuario Toji</h2>
+        <p class="workout-meta">usuario@toji.gym</p>
+        
+        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+        
+        <div style="display: flex; justify-content: space-around;">
+            <div><strong>289</strong><br><span class="workout-meta">Entrenos</span></div>
+            <div><strong>21</strong><br><span class="workout-meta">Seguidores</span></div>
+            <div><strong>19</strong><br><span class="workout-meta">Siguiendo</span></div>
+        </div>
     </div>
-    <button class="btn-login" style="background-color: #e74c3c;">Cerrar Sesión</button>
+
+    <div class="workout-card">
+        <h3 style="margin-bottom: 15px;">Frecuencia de Entrenamiento</h3>
+        <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="workoutChart"></canvas>
+        </div>
+    </div>
+
+    <a href="/api/auth/logout" style="text-decoration: none;">
+        <button class="btn-login" style="background-color: #e74c3c; margin-top: 10px; width: 100%;">Cerrar Sesión</button>
+    </a>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('workoutChart').getContext('2d');
+    
+    const workoutChart = new Chart(ctx, {
+        type: 'bar', 
+        data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+                label: 'Ejercicios completados',
+                data: [5, 8, 0, 6, 7, 12, 4], 
+                backgroundColor: 'rgba(231, 76, 60, 0.6)',
+                borderColor: 'rgba(231, 76, 60, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#bdc3c7' 
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' 
+                    },
+                    ticks: {
+                        color: '#bdc3c7'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#bdc3c7'
+                    }
+                }
+            }
+        }
+    });
+</script>
 
 <%- include('../partials/footer') %>
