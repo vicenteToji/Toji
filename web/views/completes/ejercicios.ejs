@@ -1,23 +1,25 @@
 <%- include('../partials/header') %>
-<%- include('../partials/navbar') %>
 
-<main class="content">
-    <h1>Biblioteca de Ejercicios</h1>
-    <input type="text" placeholder="🔍 Buscar ejercicio (ej: Press Banca)..." style="margin-bottom: 20px;">
-    
-    <div class="workout-card">
-        <div class="workout-header">
-            <span class="workout-title">Press de Banca (Barra)</span>
-            <span class="workout-meta">Pecho</span>
+<div class="layout-container">
+    <%- include('../partials/navbar') %>
+
+    <main class="content">
+        <div class="header-section">
+            <div>
+                <h1>Biblioteca de Ejercicios</h1>
+                <p style="color: var(--text-secondary);">Consulta tus técnicas de entrenamiento de Toji.</p>
+            </div>
+            
+            <button class="btn-login" style="width: auto; padding: 10px 25px;" onclick="window.location.href='/ejercicios/nuevo'">
+                + Nuevo Ejercicio
+            </button>
         </div>
-    </div>
-    
-    <div class="workout-card">
-        <div class="workout-header">
-            <span class="workout-title">Sentadilla Libre</span>
-            <span class="workout-meta">Piernas</span>
-        </div>
-    </div>
-</main>
+
+        <div id="lista-ejercicios" class="grid-ejercicios">
+            </div>
+    </main>
+</div>
+
+<script src="/js/ejercicios.js"></script>
 
 <%- include('../partials/footer') %>

@@ -3,10 +3,7 @@ import { auth } from '../services/firebase.mjs';
 const authController = {};
 
 authController.sessionLogin = async (req, res) => {
-
     const { idToken } = req.body;
-
-
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
 
     try {
@@ -16,10 +13,10 @@ authController.sessionLogin = async (req, res) => {
             maxAge: expiresIn,
             httpOnly: true, 
             secure: false,  
-            sameSite: 'strict'
+            sameSite: 'lax' 
         };
 
-        res.cookie('session', sessionCookie, options);
+        res.cookie('__session', sessionCookie, options);
 
         res.status(200).json({ status: 'success' });
 
@@ -30,7 +27,7 @@ authController.sessionLogin = async (req, res) => {
 };
 
 authController.logout = (req, res) => {
-    res.clearCookie('session');
+    res.clearCookie('__session');
     res.redirect('/login');
 };
 

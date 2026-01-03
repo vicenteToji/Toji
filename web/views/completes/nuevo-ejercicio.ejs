@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Toji - Añadir Técnica</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="layout-container">
+        <%- include('../partials/navbar') %>
+
+        <main class="content">
+            <h1>Añadir Técnica</h1>
+            <form id="ejercicio-form">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Grupo Muscular</label>
+                    <input type="text" id="grupo_muscular" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="descripcion"></textarea>
+                </div>
+                <button type="submit">Guardar Ejercicio</button>
+                <p id="msg" style="display:none; color:red;"></p>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('ejercicio-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg');
+            
+            const body = {
+                nombre: document.getElementById('nombre').value,
+                grupo_muscular: document.getElementById('grupo_muscular').value,
+                descripcion: document.getElementById('descripcion').value
+            };
+
+            const res = await fetch('/api/ejercicios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                window.location.href = '/ejercicios';
+            } else {
+                const err = await res.json();
+                msg.innerText = err.error || 'Error al guardar';
+                msg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,13 +1,22 @@
 import { Router } from 'express';
-import viewsController from '../controllers/views.controller.mjs';
-import { checkAuth } from '../middlewares/auth.middleware.mjs';
+import { isAuthenticated } from '../middlewares/auth.middleware.mjs';
 
 const router = Router();
 
-router.get('/login', viewsController.renderLogin);
-router.get('/', checkAuth, viewsController.renderHome);
-router.get('/rutinas', checkAuth, viewsController.renderRutinas);
-router.get('/ejercicios', checkAuth, viewsController.renderEjercicios);
-router.get('/perfil', checkAuth, viewsController.renderPerfil);
+router.get('/', (req, res) => {
+    res.render('completes/index', { title: 'Toji - Home' });
+});
+
+router.get('/login', (req, res) => {
+    res.render('completes/login', { title: 'Iniciar Sesión' });
+});
+
+router.get('/ejercicios', isAuthenticated, (req, res) => {
+    res.render('completes/ejercicios', { title: 'Mis Ejercicios' });
+});
+
+router.get('/ejercicios/nuevo', isAuthenticated, (req, res) => {
+    res.render('completes/nuevo-ejercicio', { title: 'Añadir Técnica' });
+});
 
 export default router;

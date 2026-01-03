@@ -3,8 +3,10 @@ import ejercicioController from '../controllers/ejercicio.controller.mjs';
 
 const router = Router();
 
-router.get('/', ejercicioController.getAll);
+// Esto responde a: GET http://localhost:4000/api/ejercicios/
+router.get('/', ejercicioController.getAllEjercicios);
 
-router.get('/:id', ejercicioController.getById);
+// Esto responde a: POST http://localhost:4000/api/ejercicios/
+router.post('/', ejercicioController.createEjercicio);
 
 export default router;
