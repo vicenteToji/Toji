@@ -1,34 +1,52 @@
 import { auth } from '../services/firebase.mjs';
 
-const authController = {};
-
-authController.sessionLogin = async (req, res) => {
-    const { idToken } = req.body;
-    const expiresIn = 60 * 60 * 24 * 5 * 1000;
-
-    try {
-        const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn });
-
-        const options = {
-            maxAge: expiresIn,
-            httpOnly: true, 
-            secure: false,  
-            sameSite: 'lax' 
-        };
-
-        res.cookie('__session', sessionCookie, options);
-
-        res.status(200).json({ status: 'success' });
-
-    } catch (error) {
-        console.error('Error al crear la sesión en Toji:', error);
-        res.status(401).json({ status: 'error', message: 'No se pudo autorizar la sesión.' });
-    }
+const showLogin = (req, res) => {
+    res.render('completes/login', { title: 'Iniciar Sesión', error: null });
 };
 
-authController.logout = (req, res) => {
-    res.clearCookie('__session');
+const login = async (req, res) => {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+        return res.render('completes/login', {
+            title: 'Iniciar Sesión',
+            error: 'No se recibió el token de autenticación.'
+        });
+    }
+
+    try {
+        const decodedToken = await auth.verifyIdToken(idToken);
+        const uid = decodedToken.uid;
+        const expiresIn = 60 * 60 * 24 * 7 * 1000; 
+
+        res.cookie('idToken', idToken, {
+            maxAge: expiresIn,
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            path: '/'
+        });
+
+        res.cookie('userUid', uid, {
+            maxAge: expiresIn,
+            httpOnly: false, 
+            secure: false,
+            sameSite: 'lax',
+            path: '/'
+        });
+
+        res.redirect('/ejercicios');
+    } catch (error) {
+        console.error('Error verificando token:', error.message);
+        res.render('completes/login', {
+            title: 'Iniciar Sesión',
+            error: 'Credenciales inválidas o token expirado.'
+        });
+    }
+};
+const logout = (req, res) => {
+    res.clearCookie('idToken');
     res.redirect('/login');
 };
 
-export default authController;
+export default { showLogin, login, logout };

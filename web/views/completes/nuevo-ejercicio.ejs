@@ -1,60 +1,91 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Toji - Añadir Técnica</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-    <div class="layout-container">
-        <%- include('../partials/navbar') %>
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-        <main class="content">
-            <h1>Añadir Técnica</h1>
-            <form id="ejercicio-form">
-                <div class="form-group">
-                    <label>Nombre</label>
-                    <input type="text" id="nombre" required>
-                </div>
-                <div class="form-group">
-                    <label>Grupo Muscular</label>
-                    <input type="text" id="grupo_muscular" required>
-                </div>
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <textarea id="descripcion"></textarea>
-                </div>
-                <button type="submit">Guardar Ejercicio</button>
-                <p id="msg" style="display:none; color:red;"></p>
-            </form>
-        </main>
+<main class="content">
+    <div class="header-section">
+        <h1>Añadir Técnica</h1>
     </div>
 
-    <script>
-        document.getElementById('ejercicio-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const msg = document.getElementById('msg');
-            
-            const body = {
-                nombre: document.getElementById('nombre').value,
-                grupo_muscular: document.getElementById('grupo_muscular').value,
-                descripcion: document.getElementById('descripcion').value
-            };
+    <form id="form-nuevo-ejercicio">
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required placeholder="Ej: Dominadas">
+        </div>
 
-            const res = await fetch('/api/ejercicios', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+        <div class="form-group">
+            <label for="grupo_muscular">Grupo Muscular</label>
+            <input type="text" id="grupo_muscular" name="grupo_muscular" required placeholder="Ej: Espalda">
+        </div>
 
-            if (res.ok) {
-                window.location.href = '/ejercicios';
-            } else {
-                const err = await res.json();
-                msg.innerText = err.error || 'Error al guardar';
-                msg.style.display = 'block';
-            }
+        <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" rows="4" placeholder="Opcional: describe la técnica..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="equipo">Equipo (opcional)</label>
+            <input type="text" id="equipo" name="equipo" placeholder="Ej: Barra fija">
+        </div>
+
+        <button type="submit" class="btn-primary">Guardar Ejercicio</button>
+    </form>
+
+    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 1.1em;"></div>
+</main>
+
+<script>
+const API_URL = '/api/ejercicios';
+
+document.getElementById('form-nuevo-ejercicio').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const mensaje = document.getElementById('mensaje');
+    mensaje.textContent = 'Guardando ejercicio...';
+    mensaje.style.color = '#666';
+
+    const ejercicio = {
+        nombre: document.getElementById('nombre').value.trim(),
+        grupo_muscular: document.getElementById('grupo_muscular').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        equipo: document.getElementById('equipo').value.trim() || null
+    };
+
+    if (!ejercicio.nombre || !ejercicio.grupo_muscular) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Nombre y Grupo Muscular son obligatorios.';
+        return;
+    }
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(ejercicio)
         });
-    </script>
-</body>
-</html>
+
+        const result = await response.json();
+
+        if (response.ok) {
+            mensaje.style.color = 'green';
+            mensaje.textContent = '¡Ejercicio creado con éxito! Redirigiendo a tu biblioteca...';
+            
+            document.getElementById('form-nuevo-ejercicio').reset();
+
+            setTimeout(() => {
+                window.location.href = '/ejercicios';
+            }, 1500);
+        } else {
+            mensaje.style.color = 'red';
+            mensaje.textContent = result.error || 'Error al guardar el ejercicio. Inténtalo de nuevo.';
+        }
+    } catch (error) {
+        console.error('Error de conexión:', error);
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Error de conexión. Asegúrate de que ambos servidores (web y api) estén corriendo.';
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

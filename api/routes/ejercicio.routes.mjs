@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import ejercicioController from '../controllers/ejercicio.controller.mjs';
+import { authenticateApi } from '../middlewares/auth.api.mjs';
 
 const router = Router();
 
-// Esto responde a: GET http://localhost:4000/api/ejercicios/
-router.get('/', ejercicioController.getAllEjercicios);
+router.get('/', authenticateApi, ejercicioController.getAllEjercicios);
+router.post('/', authenticateApi, ejercicioController.createEjercicio);
 
-// Esto responde a: POST http://localhost:4000/api/ejercicios/
-router.post('/', ejercicioController.createEjercicio);
+
 
 export default router;
