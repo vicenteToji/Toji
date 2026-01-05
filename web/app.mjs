@@ -14,6 +14,7 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -22,56 +23,23 @@ app.use(cookieParser());
 app.get('/api/ejercicios', isAuthenticated, async (req, res) => {
     const idToken = req.cookies.idToken;
 
-    console.log(' [PUENTE GET] Usuario autenticado, intentando cargar ejercicios');
-    console.log('   Cookie idToken presente:', !!idToken);
-
-    if (!idToken) {
-        console.warn('   No hay idToken en la cookie');
-        return res.status(401).json({ error: 'No autenticado' });
-    }
-
     try {
-        console.log('    Enviando petición a la API real...');
-        const apiResponse = await fetch('http://localhost:4000/api/ejercicios', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${idToken}`,
-                'Content-Type': 'application/json'
-            }
+        const apiRes = await fetch('http://localhost:4000/api/ejercicios', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
         });
-
-        console.log(`   Respuesta de la API: ${apiResponse.status} ${apiResponse.statusText}`);
-
-        const data = await apiResponse.json();
-        console.log('   Datos recibidos de la API:', data);
-
-        if (!apiResponse.ok) {
-            console.error('   Error de la API:', data);
-            return res.status(apiResponse.status).json(data);
-        }
-
-        console.log('   Enviando ejercicios al frontend');
-        res.status(200).json(data);
-
-    } catch (error) {
-        console.error('  Error crítico en puente GET:', error.message);
-        res.status(500).json({ error: 'Error interno al conectar con la API' });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente GET ejercicios:', err.message);
+        res.status(500).json({ error: 'Error al cargar ejercicios' });
     }
 });
-
 
 app.post('/api/ejercicios', isAuthenticated, async (req, res) => {
     const idToken = req.cookies.idToken;
 
-    console.log(' [PUENTE POST] Intentando crear ejercicio');
-    console.log('   Datos recibidos:', req.body);
-
-    if (!idToken) {
-        return res.status(401).json({ error: 'No autenticado' });
-    }
-
     try {
-        const apiResponse = await fetch('http://localhost:4000/api/ejercicios', {
+        const apiRes = await fetch('http://localhost:4000/api/ejercicios', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -79,26 +47,59 @@ app.post('/api/ejercicios', isAuthenticated, async (req, res) => {
             },
             body: JSON.stringify(req.body)
         });
-
-        const data = await apiResponse.json();
-        console.log(`   Respuesta API POST: ${apiResponse.status}`, data);
-
-        res.status(apiResponse.status).json(data);
-
-    } catch (error) {
-        console.error('   Error en puente POST:', error.message);
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente POST ejercicios:', err.message);
         res.status(500).json({ error: 'Error al crear ejercicio' });
     }
 });
 
+app.get('/api/rutinas', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch('http://localhost:4000/api/rutinas', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente GET rutinas:', err.message);
+        res.status(500).json({ error: 'Error al cargar rutinas' });
+    }
+});
+
+app.post('/api/rutinas', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch('http://localhost:4000/api/rutinas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify(req.body)
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente POST rutinas:', err.message);
+        res.status(500).json({ error: 'Error al crear rutina' });
+    }
+});
 
 app.use('/', viewRoutes);
 
 app.use((req, res) => {
-    res.status(404).render('completes/404', { title: 'Página no encontrada' });
+    res.status(404).send(`
+        <h1>404 - Página no encontrada</h1>
+        <p>Vuelve al <a href="/">inicio</a></p>
+    `);
 });
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor en ${PORT}`);
+    console.log(` Servidor en ${PORT}`);
 });

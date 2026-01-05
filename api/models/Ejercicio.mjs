@@ -1,10 +1,9 @@
 export default class Ejercicio {
-    
-    constructor(id, nombre, grupoMuscular, descripcion, equipo) {
+    constructor(id, nombre, grupo_muscular, descripcion, equipo) {
         this.id = id;
         this.nombre = nombre;
-        this.grupoMuscular = grupoMuscular; 
-        this.descripcion = descripcion;    
-        this.equipo = equipo;               
+        this.grupo_muscular = grupo_muscular;  
+        this.descripcion = descripcion;
+        this.equipo = equipo;
     }
 }

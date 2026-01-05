@@ -1,11 +1,9 @@
 import ejercicioRepository from '../repositories/ejercicio.repository.mjs';
 
 const getAllEjercicios = async (req, res) => {
-    const userId = req.user?.uid;  
+    const userId = req.user?.uid;
 
-    if (!userId) {
-        return res.status(401).json({ error: 'No autenticado' });
-    }
+    if (!userId) return res.status(401).json({ error: 'No autenticado' });
 
     try {
         const ejercicios = await ejercicioRepository.findAllByUser(userId);
@@ -19,9 +17,7 @@ const getAllEjercicios = async (req, res) => {
 const createEjercicio = async (req, res) => {
     const userId = req.user?.uid;
 
-    if (!userId) {
-        return res.status(401).json({ error: 'No autenticado' });
-    }
+    if (!userId) return res.status(401).json({ error: 'No autenticado' });
 
     const { nombre, grupo_muscular, descripcion, equipo } = req.body;
 
@@ -30,8 +26,10 @@ const createEjercicio = async (req, res) => {
     }
 
     try {
-        const ejercicioData = { nombre, grupo_muscular, descripcion, equipo };
-        const nuevoEjercicio = await ejercicioRepository.create(ejercicioData, userId);
+        const nuevoEjercicio = await ejercicioRepository.create(
+            { nombre, grupo_muscular, descripcion, equipo },
+            userId
+        );
 
         res.status(201).json({
             message: 'Ejercicio creado con éxito',

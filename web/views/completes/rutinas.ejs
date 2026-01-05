@@ -4,16 +4,83 @@
 <main class="content">
     <div class="header-section">
         <h1>Mis Rutinas</h1>
-        <button class="btn-login" style="width: auto; padding: 10px 20px;">+ Nueva Rutina</button>
+        <a href="/rutinas/nueva" class="btn-primary">+ Nueva Rutina</a>
     </div>
 
-    <div class="workout-card">
-        <div class="workout-header">
-            <span class="workout-title">Rutina de Empuje (Push)</span>
-            <span class="workout-meta">3 Ejercicios</span>
-        </div>
-        <p class="workout-meta">Pectoral, Tríceps, Deltoides</p>
+    <div id="lista-rutinas">
+        <p style="text-align:center; color:#666;">Cargando tus rutinas...</p>
     </div>
 </main>
+
+<script>
+const API_URL = '/api/rutinas';
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarRutinas();
+});
+
+async function cargarRutinas() {
+    const contenedor = document.getElementById('lista-rutinas');
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                contenedor.innerHTML = '<p style="color:orange; text-align:center;">Sesión expirada. <a href="/login">Inicia sesión de nuevo</a>.</p>';
+                return;
+            }
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const rutinas = await response.json();
+
+        contenedor.innerHTML = '';
+
+        if (!rutinas || rutinas.length === 0) {
+            contenedor.innerHTML = `
+                <div style="text-align:center; color:#999; margin-top:50px;">
+                    <p>Aún no tienes rutinas creadas.</p>
+                    <a href="/rutinas/nueva" class="btn-primary">Crea tu primera rutina</a>
+                </div>`;
+            return;
+        }
+
+        rutinas.forEach(rutina => {
+            const card = document.createElement('div');
+            card.className = 'workout-card'; 
+            card.style.marginBottom = '20px';
+
+            let ejerciciosHTML = '';
+            if (rutina.ejercicios && rutina.ejercicios.length > 0) {
+                const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular))];
+                ejerciciosHTML = `<p class="workout-meta">${grupos.join(', ')}</p>`;
+            } else {
+                ejerciciosHTML = '<p class="workout-meta">Sin ejercicios asignados</p>';
+            }
+
+            card.innerHTML = `
+                <div class="workout-header">
+                    <span class="workout-title">${rutina.nombre}</span>
+                    <span class="workout-meta">${rutina.ejercicios ? rutina.ejercicios.length : 0} Ejercicios</span>
+                </div>
+                ${ejerciciosHTML}
+                ${rutina.descripcion ? `<p style="margin: 10px 0; color: #aaa;">${rutina.descripcion}</p>` : ''}
+            `;
+
+            contenedor.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error('Error cargando rutinas:', error);
+        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar rutinas. Intenta recargar la página.</p>';
+    }
+}
+</script>
 
 <%- include('../partials/footer') %>

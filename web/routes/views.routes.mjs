@@ -24,4 +24,12 @@ router.get('/rutinas', isAuthenticated, (req, res) => {
     res.render('completes/rutinas', { title: 'Mis Rutinas' });
 });
 
+router.get('/rutinas/nueva', isAuthenticated, (req, res) => {
+    res.render('completes/nueva-rutina', { title: 'Nueva Rutina' });
+});
+
+router.get('/rutinas', isAuthenticated, (req, res) => {
+    res.render('completes/rutinas', { title: 'Mis Rutinas' });
+});
+
 export default router;

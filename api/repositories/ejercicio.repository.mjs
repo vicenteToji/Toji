@@ -10,37 +10,16 @@ ejercicioRepository.findAllByUser = async (userId) => {
         .eq('user_id', userId);
 
     if (error) {
-        throw new Error(`Error en el repositorio al buscar ejercicios del usuario: ${error.message}`);
+        throw new Error(`Error en el repositorio al buscar ejercicios: ${error.message}`);
     }
 
-    return data.map(item => new Ejercicio(
-        item.id,
-        item.nombre,
-        item.grupo_muscular, 
-        item.descripcion,
-        item.equipo
+    return data.map(ej => new Ejercicio(
+        ej.id,
+        ej.nombre,
+        ej.grupo_muscular,
+        ej.descripcion,
+        ej.equipo
     ));
-};
-
-ejercicioRepository.create = async (ejercicioData, userId) => {
-    const dataToInsert = { ...ejercicioData, user_id: userId };
-
-    const { data, error } = await supabase
-        .from('ejercicios')
-        .insert([dataToInsert])
-        .select();
-
-    if (error) {
-        throw new Error(`Error en el repositorio al crear ejercicio: ${error.message}`);
-    }
-
-    return new Ejercicio(
-        data[0].id,
-        data[0].nombre,
-        data[0].grupo_muscular,
-        data[0].descripcion,
-        data[0].equipo
-    );
 };
 
 ejercicioRepository.findById = async (id, userId) => {
@@ -52,6 +31,38 @@ ejercicioRepository.findById = async (id, userId) => {
         .single();
 
     if (error || !data) return null;
+
+    return new Ejercicio(
+        data.id,
+        data.nombre,
+        data.grupo_muscular,
+        data.descripcion,
+        data.equipo
+    );
+};
+
+ejercicioRepository.create = async (ejercicioData, userId) => {
+    const { nombre, grupo_muscular, descripcion, equipo } = ejercicioData;
+
+    const { data, error } = await supabase
+        .from('ejercicios')
+        .insert([{
+            nombre,
+            grupo_muscular,
+            descripcion,
+            equipo,
+            user_id: userId
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        throw new Error(`Error en el repositorio al crear ejercicio: ${error.message}`);
+    }
+
+    if (!data) {
+        throw new Error('No se devolvió el ejercicio creado');
+    }
 
     return new Ejercicio(
         data.id,
