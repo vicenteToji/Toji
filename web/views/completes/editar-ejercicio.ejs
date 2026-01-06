@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="content">
+    <div class="header-section">
+        <h1>Editar Ejercicio</h1>
+    </div>
+
+    <form id="form-editar-ejercicio">
+        <input type="hidden" id="ejercicio-id" value="<%= ejercicio.id %>">
+
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" value="<%= ejercicio.nombre %>" required>
+        </div>
+
+        <div class="form-group">
+            <label for="grupo_muscular">Grupo Muscular</label>
+            <input type="text" id="grupo_muscular" value="<%= ejercicio.grupo_muscular %>" required>
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" rows="4"><%= ejercicio.descripcion || '' %></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="equipo">Equipo (opcional)</label>
+            <input type="text" id="equipo" value="<%= ejercicio.equipo || '' %>">
+        </div>
+
+        <button type="submit" class="btn-primary">Guardar Cambios</button>
+        <a href="/ejercicios" class="btn-secondary" style="margin-left: 10px;">Cancelar</a>
+    </form>
+
+    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
+</main>
+
+<script>
+const API_URL = '/api/ejercicios';
+const ejercicioId = document.getElementById('ejercicio-id').value;
+
+document.getElementById('form-editar-ejercicio').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const mensaje = document.getElementById('mensaje');
+    mensaje.textContent = 'Guardando cambios...';
+    mensaje.style.color = '#666';
+
+    const ejercicio = {
+        nombre: document.getElementById('nombre').value.trim(),
+        grupo_muscular: document.getElementById('grupo_muscular').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim() || null,
+        equipo: document.getElementById('equipo').value.trim() || null
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/${ejercicioId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ejercicio)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            mensaje.style.color = 'green';
+            mensaje.textContent = '¡Ejercicio actualizado con éxito! Redirigiendo...';
+            setTimeout(() => location.href = '/ejercicios', 1500);
+        } else {
+            mensaje.style.color = 'red';
+            mensaje.textContent = result.error || 'Error al actualizar';
+        }
+    } catch (err) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Error de conexión';
+    }
+});
+</script>
+
+<%- include('../partials/footer') %>

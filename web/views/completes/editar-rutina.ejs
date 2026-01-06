@@ -1,0 +1,135 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="content">
+    <div class="header-section">
+        <h1>Editar Rutina</h1>
+    </div>
+
+    <form id="form-editar-rutina">
+        <input type="hidden" id="rutina-id" value="<%= rutina.id %>">
+
+        <div class="form-group">
+            <label for="nombre">Nombre de la rutina</label>
+            <input type="text" id="nombre" value="<%= rutina.nombre %>" required placeholder="Ej: Push Día A">
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción (opcional)</label>
+            <textarea id="descripcion" rows="3"><%= rutina.descripcion || '' %></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Añade o quita ejercicios de tu biblioteca</label>
+            <div id="lista-ejercicios-rutina">
+                <p style="text-align:center; color:#666;">Cargando tus ejercicios...</p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Guardar Cambios</button>
+        <a href="/rutinas" class="btn-secondary" style="margin-left: 10px;">Cancelar</a>
+    </form>
+
+    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 1.1em;"></div>
+</main>
+
+<script>
+const API_EJERCICIOS = '/api/ejercicios';
+const API_RUTINAS = '/api/rutinas';
+const rutinaId = document.getElementById('rutina-id').value;
+
+const ejerciciosActuales = {};
+<% rutina.ejercicios.forEach(ej => { %>
+    ejerciciosActuales[<%= ej.id %>] = true;
+<% }) %>
+
+async function cargarEjerciciosParaEditar() {
+    const contenedor = document.getElementById('lista-ejercicios-rutina');
+
+    try {
+        const res = await fetch(API_EJERCICIOS);
+        if (!res.ok) throw new Error('Error al cargar ejercicios');
+        const ejercicios = await res.json();
+
+        contenedor.innerHTML = '';
+
+        if (ejercicios.length === 0) {
+            contenedor.innerHTML = '<p style="text-align:center;">No tienes ejercicios aún. <a href="/ejercicios/nuevo">Añade uno</a></p>';
+            return;
+        }
+
+        ejercicios.forEach(ej => {
+            const checked = ejerciciosActuales[ej.id] ? 'checked' : '';
+
+            const div = document.createElement('div');
+            div.style = 'margin: 15px 0; padding: 12px; background: #222; border-radius: 8px;';
+            div.innerHTML = `
+                <label style="display: block; cursor: pointer; color: #fff;">
+                    <input type="checkbox" value="${ej.id}" ${checked} style="margin-right: 12px; transform: scale(1.2);">
+                    <strong>${ej.nombre}</strong> - ${ej.grupo_muscular || 'Sin grupo'}
+                    <small style="display: block; color: #aaa; margin-left: 28px;">
+                        ${ej.descripcion || 'Sin descripción'}
+                        ${ej.equipo ? ' · Equipo: ' + ej.equipo : ''}
+                    </small>
+                </label>
+            `;
+            contenedor.appendChild(div);
+        });
+    } catch (err) {
+        console.error('Error al cargar ejercicios:', err);
+        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar ejercicios. Recarga la página.</p>';
+    }
+}
+
+document.getElementById('form-editar-rutina').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const mensaje = document.getElementById('mensaje');
+    mensaje.textContent = 'Guardando cambios...';
+    mensaje.style.color = '#666';
+
+    const nombre = document.getElementById('nombre').value.trim();
+    const descripcion = document.getElementById('descripcion').value.trim();
+    const checkboxes = document.querySelectorAll('#lista-ejercicios-rutina input[type="checkbox"]:checked');
+    const ejercicios = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+    if (!nombre) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'El nombre es obligatorio';
+        return;
+    }
+
+    if (ejercicios.length === 0) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Selecciona al menos un ejercicio';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_RUTINAS}/${rutinaId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, descripcion, ejercicios })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            mensaje.style.color = 'green';
+            mensaje.textContent = '¡Rutina actualizada con éxito! Redirigiendo...';
+            setTimeout(() => location.href = '/rutinas', 1500);
+        } else {
+            mensaje.style.color = 'red';
+            mensaje.textContent = result.error || 'Error al actualizar la rutina';
+        }
+    } catch (err) {
+        console.error('Error de conexión:', err);
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Error de conexión. Recarga la página.';
+    }
+});
+
+cargarEjerciciosParaEditar();
+</script>
+
+<%- include('../partials/footer') %>

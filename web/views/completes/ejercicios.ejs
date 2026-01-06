@@ -1,25 +1,120 @@
 <%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-<div class="layout-container">
-    <%- include('../partials/navbar') %>
+<main class="content">
+    <div class="header-section">
+        <h1>Biblioteca de Ejercicios</h1>
+        <p>Consulta tus técnicas de entrenamiento de Toji.</p>
+        <a href="/ejercicios/nuevo" class="btn-primary">+ Nuevo Ejercicio</a>
+    </div>
 
-    <main class="content">
-        <div class="header-section">
-            <div>
-                <h1>Biblioteca de Ejercicios</h1>
-                <p style="color: var(--text-secondary);">Consulta tus técnicas de entrenamiento de Toji.</p>
-            </div>
-            
-            <button class="btn-login" style="width: auto; padding: 10px 25px;" onclick="window.location.href='/ejercicios/nuevo'">
-                + Nuevo Ejercicio
-            </button>
-        </div>
+    <div id="lista-ejercicios">
+        <p style="text-align:center; color:#666;">Cargando tus ejercicios...</p>
+    </div>
+</main>
 
-        <div id="lista-ejercicios" class="grid-ejercicios">
-            </div>
-    </main>
-</div>
+<script>
+const API_URL = '/api/ejercicios';
 
-<script src="/js/ejercicios.js"></script>
+document.addEventListener('DOMContentLoaded', () => {
+    cargarEjercicios();
+});
+
+async function cargarEjercicios() {
+    const contenedor = document.getElementById('lista-ejercicios');
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                contenedor.innerHTML = '<p style="color:orange; text-align:center;">Sesión expirada. <a href="/login">Inicia sesión de nuevo</a>.</p>';
+                return;
+            }
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const ejercicios = await response.json();
+
+        contenedor.innerHTML = '';
+
+        if (!ejercicios || ejercicios.length === 0) {
+            contenedor.innerHTML = `
+                <div style="text-align:center; color:#999; margin-top:50px;">
+                    <p>Aún no tienes ejercicios guardados.</p>
+                    <a href="/ejercicios/nuevo" class="btn-primary">Añade tu primera técnica</a>
+                </div>`;
+            return;
+        }
+
+        ejercicios.forEach(ejercicio => {
+            const card = document.createElement('div');
+            card.className = 'card-ejercicio';
+            card.style.marginBottom = '20px';
+            card.style.padding = '15px';
+            card.style.background = '#222';
+            card.style.borderRadius = '8px';
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 style="margin: 0 0 8px 0;">${ejercicio.nombre}</h3>
+                        <span class="tag" style="background:#333; padding:4px 8px; border-radius:4px; font-size:0.9em;">
+                            ${ejercicio.grupo_muscular || 'Sin grupo'}
+                        </span>
+                        <p style="margin: 10px 0; color:#ccc;">
+                            ${ejercicio.descripcion || 'Sin descripción'}
+                        </p>
+                        <small style="color:#aaa;">Equipo: ${ejercicio.equipo || 'Ninguno'}</small>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <a href="/ejercicios/editar/${ejercicio.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px;">
+                            Editar
+                        </a>
+                        <button onclick="eliminarEjercicio(${ejercicio.id})" class="btn-small" style="background:#a00; color:#fff; padding:6px 12px; border:none; border-radius:4px; cursor:pointer;">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            contenedor.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error('Error cargando ejercicios:', error);
+        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar ejercicios. Intenta recargar la página.</p>';
+    }
+}
+
+async function eliminarEjercicio(id) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este ejercicio? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/ejercicios/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Ejercicio eliminado con éxito');
+            location.reload();
+        } else {
+            alert(result.error || 'Error al eliminar el ejercicio');
+        }
+    } catch (err) {
+        console.error('Error al eliminar:', err);
+        alert('Error de conexión al eliminar el ejercicio');
+    }
+}
+</script>
 
 <%- include('../partials/footer') %>

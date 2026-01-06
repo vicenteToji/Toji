@@ -53,21 +53,31 @@ async function cargarRutinas() {
 
         rutinas.forEach(rutina => {
             const card = document.createElement('div');
-            card.className = 'workout-card'; 
+            card.className = 'workout-card';
             card.style.marginBottom = '20px';
 
             let ejerciciosHTML = '';
             if (rutina.ejercicios && rutina.ejercicios.length > 0) {
-                const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular))];
+                const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular || 'Sin grupo'))];
                 ejerciciosHTML = `<p class="workout-meta">${grupos.join(', ')}</p>`;
             } else {
                 ejerciciosHTML = '<p class="workout-meta">Sin ejercicios asignados</p>';
             }
 
             card.innerHTML = `
-                <div class="workout-header">
-                    <span class="workout-title">${rutina.nombre}</span>
-                    <span class="workout-meta">${rutina.ejercicios ? rutina.ejercicios.length : 0} Ejercicios</span>
+                <div class="workout-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="workout-title">${rutina.nombre}</span>
+                        <span class="workout-meta">${rutina.ejercicios ? rutina.ejercicios.length : 0} Ejercicios</span>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="/rutinas/editar/${rutina.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px;">
+                            Editar
+                        </a>
+                        <button onclick="eliminarRutina(${rutina.id})" class="btn-small" style="background:#a00; color:#fff; padding:6px 12px; border:none; border-radius:4px; cursor:pointer;">
+                            Eliminar
+                        </button>
+                    </div>
                 </div>
                 ${ejerciciosHTML}
                 ${rutina.descripcion ? `<p style="margin: 10px 0; color: #aaa;">${rutina.descripcion}</p>` : ''}
@@ -79,6 +89,30 @@ async function cargarRutinas() {
     } catch (error) {
         console.error('Error cargando rutinas:', error);
         contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar rutinas. Intenta recargar la página.</p>';
+    }
+}
+
+async function eliminarRutina(id) {
+    if (!confirm('¿Estás seguro de eliminar esta rutina? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/rutinas/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Rutina eliminada con éxito');
+            location.reload();
+        } else {
+            alert(result.error || 'Error al eliminar la rutina');
+        }
+    } catch (err) {
+        console.error('Error al eliminar rutina:', err);
+        alert('Error de conexión al eliminar');
     }
 }
 </script>

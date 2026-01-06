@@ -73,4 +73,25 @@ ejercicioRepository.create = async (ejercicioData, userId) => {
     );
 };
 
+ejercicioRepository.update = async (ejercicioId, ejercicioData, userId) => {
+    const { data, error } = await supabase
+        .from('ejercicios')
+        .update(ejercicioData)
+        .eq('id', ejercicioId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+    if (error) throw new Error(`Error al actualizar ejercicio: ${error.message}`);
+    if (!data) throw new Error('Ejercicio no encontrado');
+
+    return new Ejercicio(
+        data.id,
+        data.nombre,
+        data.grupo_muscular,
+        data.descripcion,
+        data.equipo
+    );
+};
+
 export default ejercicioRepository;

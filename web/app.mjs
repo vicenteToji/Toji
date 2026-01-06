@@ -55,6 +55,26 @@ app.post('/api/ejercicios', isAuthenticated, async (req, res) => {
     }
 });
 
+app.put('/api/ejercicios/:id', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch(`http://localhost:4000/api/ejercicios/${req.params.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify(req.body)
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente PUT ejercicio:', err.message);
+        res.status(500).json({ error: 'Error al actualizar ejercicio' });
+    }
+});
+
 app.get('/api/rutinas', isAuthenticated, async (req, res) => {
     const idToken = req.cookies.idToken;
 
@@ -87,6 +107,63 @@ app.post('/api/rutinas', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Error puente POST rutinas:', err.message);
         res.status(500).json({ error: 'Error al crear rutina' });
+    }
+});
+
+app.delete('/api/ejercicios/:id', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch(`http://localhost:4000/api/ejercicios/${req.params.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        });
+
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente DELETE ejercicio:', err.message);
+        res.status(500).json({ error: 'Error al eliminar ejercicio' });
+    }
+});
+
+app.put('/api/rutinas/:id', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch(`http://localhost:4000/api/rutinas/${req.params.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify(req.body)
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente PUT rutina:', err.message);
+        res.status(500).json({ error: 'Error al actualizar rutina' });
+    }
+});
+
+app.delete('/api/rutinas/:id', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch(`http://localhost:4000/api/rutinas/${req.params.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente DELETE rutina:', err.message);
+        res.status(500).json({ error: 'Error al eliminar rutina' });
     }
 });
 
