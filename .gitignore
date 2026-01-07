@@ -7,3 +7,4 @@ node_modules/
 npm-debug.log
 toji-gym-firebase-adminsdk-fbsvc-c995c165da.json
 serviceAccountKey.json
+firebase-credentials.json

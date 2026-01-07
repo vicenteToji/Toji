@@ -23,10 +23,21 @@ async function cargarEntrenamientos() {
     const contenedor = document.getElementById('lista-entrenamientos');
 
     try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Error al cargar');
+        const response = await fetch(API_URL, {
+            credentials: 'include'  
+        });
 
-        const entrenamientos = await response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !Array.isArray(data.entrenamientos)) {
+            throw new Error('Formato de respuesta inesperado');
+        }
+
+        const entrenamientos = data.entrenamientos;
 
         contenedor.innerHTML = '';
 
@@ -36,21 +47,41 @@ async function cargarEntrenamientos() {
         }
 
         entrenamientos.forEach(ent => {
+            let volumenTotal = 0;
+            let seriesCount = 0;
+
+            if (ent.series && ent.series.length > 0) {
+                ent.series.forEach(serie => {
+                    if (serie.peso && serie.reps) {
+                        volumenTotal += serie.peso * serie.reps;
+                        seriesCount++;
+                    }
+                });
+            }
+
             const card = document.createElement('div');
             card.className = 'card-ejercicio';
             card.style.marginBottom = '20px';
 
             card.innerHTML = `
                 <h3>Entrenamiento del ${new Date(ent.fecha).toLocaleDateString('es-ES')}</h3>
-                <p><strong>Rutina:</strong> ${ent.rutina_nombre}</p>
-                <p><strong>Series:</strong> ${ent.series_count}</p>
-                <p><strong>Volumen total:</strong> ${ent.volumen_total} kg</p>
+                <p><strong>Rutina:</strong> ${ent.rutinas?.nombre || 'Sin nombre'}</p>
+                <p><strong>Series realizadas:</strong> ${seriesCount}</p>
+                <p><strong>Volumen total:</strong> ${volumenTotal.toLocaleString('es-ES')} kg</p>
                 ${ent.notas ? `<p><strong>Notas:</strong> ${ent.notas}</p>` : ''}
+                <details style="margin-top:10px;">
+                    <summary>Ver detalles</summary>
+                    ${ent.series?.map(serie => 
+                        `<p>• ${serie.ejercicios?.nombre || 'Ejercicio'} - Serie ${serie.serie_number}: ${serie.peso}kg x ${serie.reps} reps</p>`
+                    ).join('') || '<p>Sin series registradas</p>'}
+                </details>
             `;
 
             contenedor.appendChild(card);
         });
+
     } catch (err) {
+        console.error('Error cargando entrenamientos:', err);
         contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar historial</p>';
     }
 }

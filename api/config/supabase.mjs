@@ -7,11 +7,8 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error('ERROR CRÍTICO: Faltan las credenciales de Supabase en el archivo .env');
-    process.exit(1); 
+    console.error('Error: Faltan credenciales de Supabase en .env');
+    process.exit(1);
 }
 
-export const supabase = createClient(
-    process.env.SUPABASE_URL, 
-    process.env.SUPABASE_KEY
-);
+export const supabase = createClient(supabaseUrl, supabaseKey);

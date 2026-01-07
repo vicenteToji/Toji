@@ -44,7 +44,7 @@ const guardarEntrenamiento = async (req, res) => {
 
         res.status(200).json({ message: 'Entrenamiento guardado con éxito' });
     } catch (error) {
-        console.error('Error al guardar entrenamiento:', error.message);
+        console.error('ERROR COMPLETO al guardar entrenamiento:', error);
         res.status(500).json({ error: 'Error al guardar el entrenamiento' });
     }
 };
@@ -57,10 +57,15 @@ const getAllEntrenamientos = async (req, res) => {
     }
 
     try {
-        const { data: entrenamientos, error } = await supabase
+        console.log(`[INFO] Cargando entrenamientos para user_id: ${userId}`);
+
+        const { data: entrenamientos, error: errorEntrenamientos } = await supabase
             .from('entrenamientos')
             .select(`
-                *,
+                id,
+                fecha,
+                notas,
+                rutina_id,
                 rutinas (
                     nombre,
                     descripcion
@@ -69,47 +74,64 @@ const getAllEntrenamientos = async (req, res) => {
             .eq('user_id', userId)
             .order('fecha', { ascending: false });
 
-        if (error) throw error;
+        if (errorEntrenamientos) {
+            console.error('ERROR en consulta principal:', errorEntrenamientos);
+            throw errorEntrenamientos;
+        }
+
+        console.log(`[INFO] Encontrados ${entrenamientos?.length || 0} entrenamientos`);
 
         const entrenamientosConSeries = await Promise.all(
             entrenamientos.map(async (entrenamiento) => {
                 const { data: series, error: errorSeries } = await supabase
                     .from('series')
                     .select(`
-                        *,
+                        id,
+                        serie_number,
+                        peso,
+                        reps,
+                        ejercicio_id,
                         ejercicios (
+                            id,
                             nombre,
-                            grupo_muscular,
-                            tipo
+                            grupo_muscular
                         )
                     `)
                     .eq('entrenamiento_id', entrenamiento.id)
                     .order('ejercicio_id')
                     .order('serie_number');
 
-                if (errorSeries) throw errorSeries;
+                if (errorSeries) {
+                    console.error(`ERROR al cargar series para entrenamiento ${entrenamiento.id}:`, errorSeries);
+                    throw errorSeries;
+                }
 
                 return {
                     ...entrenamiento,
-                    series
+                    series: series || []
                 };
             })
         );
 
+        console.log('[ÉXITO] Entrenamientos cargados correctamente');
         res.status(200).json({
             success: true,
             entrenamientos: entrenamientosConSeries
         });
 
     } catch (error) {
-        console.error('Error al obtener entrenamientos:', error.message);
+        console.error('ERROR CRÍTICO al obtener entrenamientos:');
+        console.error('Mensaje:', error.message);
+        console.error('Detalles:', error.details || 'N/A');
+        console.error('Hint:', error.hint || 'N/A');
+        console.error('Código:', error.code || 'N/A');
+
         res.status(500).json({ 
             success: false,
-            error: 'Error al obtener entrenamientos' 
+            error: 'Error al obtener entrenamientos'
         });
     }
 };
-
 
 export default {
     guardarEntrenamiento,

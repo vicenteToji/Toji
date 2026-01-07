@@ -64,7 +64,7 @@ export const authenticate = async (req, res, next) => {
         }
 
         const decodedToken = await auth.verifyIdToken(idToken);
-        
+
         req.user = decodedToken;
         
         next();

@@ -2,83 +2,119 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <h1>Mi Perfil</h1>
-    
-    <div class="workout-card" style="text-align: center;">
-        <div style="font-size: 50px; margin-bottom: 10px;">👤</div>
-        <h2>Usuario Toji</h2>
-        <p class="workout-meta">usuario@toji.gym</p>
-        
-        <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
-        
-        <div style="display: flex; justify-content: space-around;">
-            <div><strong>289</strong><br><span class="workout-meta">Entrenos</span></div>
-            <div><strong>21</strong><br><span class="workout-meta">Seguidores</span></div>
-            <div><strong>19</strong><br><span class="workout-meta">Siguiendo</span></div>
+    <div class="header-section">
+        <h1>Mi Perfil</h1>
+        <p>Estadísticas de tu progreso</p>
+    </div>
+
+    <div class="card-ejercicio" style="padding: 20px; margin: 20px auto; max-width: 900px;">
+        <h2 style="text-align: center; margin-bottom: 20px; font-size: 1.3rem;">Series completadas por día (últimos 30 días)</h2>
+        <div style="max-width: 800px; margin: 0 auto; height: 300px;">
+            <canvas id="seriesChart"></canvas>
         </div>
     </div>
 
-    <div class="workout-card">
-        <h3 style="margin-bottom: 15px;">Frecuencia de Entrenamiento</h3>
-        <div style="position: relative; height: 250px; width: 100%;">
-            <canvas id="workoutChart"></canvas>
-        </div>
-    </div>
-
-    <a href="/api/auth/logout" style="text-decoration: none;">
-        <button class="btn-login" style="background-color: #e74c3c; margin-top: 10px; width: 100%;">Cerrar Sesión</button>
-    </a>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    const ctx = document.getElementById('workoutChart').getContext('2d');
-    
-    const workoutChart = new Chart(ctx, {
-        type: 'bar', 
-        data: {
-            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-            datasets: [{
-                label: 'Ejercicios completados',
-                data: [5, 8, 0, 6, 7, 12, 4], 
-                backgroundColor: 'rgba(231, 76, 60, 0.6)',
-                borderColor: 'rgba(231, 76, 60, 1)',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#bdc3c7' 
-                    }
-                }
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('/api/estadisticas/series-por-semana', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success || !Array.isArray(result.data)) {
+            throw new Error('Datos inválidos');
+        }
+
+        const datos = result.data;
+
+        if (datos.length === 0) {
+            document.querySelector('.card-ejercicio').innerHTML += 
+                '<p style="text-align:center; color:#999; padding: 40px 0;">Aún no tienes datos para mostrar</p>';
+            return;
+        }
+
+        const labels = datos.map(item => {
+            const fecha = new Date(item.dia + 'T00:00:00');
+            const dia = fecha.getDate();
+            const mes = fecha.toLocaleString('es', { month: 'short' });
+            return `${dia} ${mes}`;
+        });
+        
+        const valores = datos.map(item => item.count);
+
+        const ctx = document.getElementById('seriesChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Series realizadas',
+                    data: valores,
+                    backgroundColor: 'rgba(100, 180, 255, 0.7)',
+                    borderColor: 'rgba(50, 120, 220, 1)',
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)' 
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { 
+                            stepSize: 5,
+                            color: '#ccc',
+                            font: { size: 11 }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.1)' }
                     },
-                    ticks: {
-                        color: '#bdc3c7'
+                    x: {
+                        ticks: {
+                            color: '#ccc',
+                            font: { size: 9 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: { display: false }
                     }
                 },
-                x: {
-                    grid: {
-                        display: false
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: {
+                            color: '#ccc',
+                            font: { size: 12 }
+                        }
                     },
-                    ticks: {
-                        color: '#bdc3c7'
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        callbacks: {
+                            label: context => `Series: ${context.parsed.y}`
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+
+    } catch (err) {
+        console.error('Error cargando gráfica:', err);
+        document.querySelector('.card-ejercicio').innerHTML += 
+            '<p style="color:red; text-align:center;">Error al cargar la gráfica</p>';
+    }
+});
 </script>
 
 <%- include('../partials/footer') %>

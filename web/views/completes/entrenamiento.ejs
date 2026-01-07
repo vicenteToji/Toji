@@ -88,7 +88,6 @@ document.querySelectorAll('.add-serie').forEach(btn => {
     });
 });
 
-
 document.getElementById('terminar-entreno').addEventListener('click', async () => {
     if (!confirm('¿Terminar el entrenamiento y guardar?')) return;
 
@@ -117,7 +116,7 @@ document.getElementById('terminar-entreno').addEventListener('click', async () =
     };
 
     try {
-        const response = await fetch('/api/entrenamiento/guardar', {
+        const response = await fetch('/api/entrenamientos/guardar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(entrenamientoData)
