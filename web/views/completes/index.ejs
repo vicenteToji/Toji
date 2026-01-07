@@ -3,45 +3,57 @@
 
 <main class="content">
     <div class="header-section">
-        <h1>Bienvenido a TOJI</h1>
-        <p class="workout-meta">Tu progreso hoy es tu victoria mañana.</p>
+        <h1>Historial de Entrenamientos</h1>
+        <p>Tus sesiones completadas</p>
     </div>
 
-    <div class="stats-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
-        <div class="workout-card" style="margin-bottom: 0; text-align: center;">
-            <h3 style="color: var(--accent-color);">12</h3>
-            <p class="workout-meta">Entrenos Mes</p>
-        </div>
-        <div class="workout-card" style="margin-bottom: 0; text-align: center;">
-            <h3 style="color: var(--accent-color);">75%</h3>
-            <p class="workout-meta">Meta Semanal</p>
-        </div>
-    </div>
-
-    <h2 style="margin-bottom: 15px;">Actividad Reciente</h2>
-
-    <div class="workout-card">
-        <div class="workout-header">
-            <span class="workout-title">Sesión de Pierna Completa</span>
-            <span class="workout-meta">Hace 2 horas</span>
-        </div>
-        <div class="workout-details">
-            <p>Sentadilla: 4 x 10 (80kg)</p>
-            <p>Prensa: 3 x 12 (120kg)</p>
-        </div>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; display: flex; gap: 15px;">
-            <span>❤️ 12</span>
-            <span>💬 3</span>
-        </div>
-    </div>
-
-    <div class="workout-card">
-        <div class="workout-header">
-            <span class="workout-title">Rutina de Tracción (Pull)</span>
-            <span class="workout-meta">Ayer</span>
-        </div>
-        <p class="workout-meta">Dominadas, Remo con barra, Biceps</p>
+    <div id="lista-entrenamientos">
+        <p style="text-align:center; color:#666;">Cargando historial...</p>
     </div>
 </main>
+
+<script>
+const API_URL = '/api/entrenamientos';
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarEntrenamientos();
+});
+
+async function cargarEntrenamientos() {
+    const contenedor = document.getElementById('lista-entrenamientos');
+
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Error al cargar');
+
+        const entrenamientos = await response.json();
+
+        contenedor.innerHTML = '';
+
+        if (entrenamientos.length === 0) {
+            contenedor.innerHTML = '<p style="text-align:center; color:#999;">No tienes entrenamientos aún. <a href="/rutinas">Ve a rutinas</a></p>';
+            return;
+        }
+
+        entrenamientos.forEach(ent => {
+            const card = document.createElement('div');
+            card.className = 'card-ejercicio';
+            card.style.marginBottom = '20px';
+
+            card.innerHTML = `
+                <h3>Entrenamiento del ${new Date(ent.fecha).toLocaleDateString('es-ES')}</h3>
+                <p><strong>Rutina:</strong> ${ent.rutina_nombre}</p>
+                <p><strong>Series:</strong> ${ent.series_count}</p>
+                <p><strong>Volumen total:</strong> ${ent.volumen_total} kg</p>
+                ${ent.notas ? `<p><strong>Notas:</strong> ${ent.notas}</p>` : ''}
+            `;
+
+            contenedor.appendChild(card);
+        });
+    } catch (err) {
+        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar historial</p>';
+    }
+}
+</script>
 
 <%- include('../partials/footer') %>

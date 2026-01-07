@@ -1,62 +1,66 @@
 <%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
 
-<main class="login-container">
-    <div class="login-card">
-        <div class="nav-logo">
-            <h2>TOJI</h2>
-        </div>
-        
-        <h1 id="auth-title">Iniciar Sesión</h1>
-        <p class="workout-meta" id="auth-subtitle">Introduce tus credenciales para entrenar</p>
+<main class="content">
+    <div class="login-container">
+        <h1>Iniciar Sesión</h1>
+        <p>Introduce tus credenciales para entrenar</p>
 
-        <form id="auth-form" style="margin-top: 20px;">
+        <div id="mensaje" style="text-align: center; margin: 20px 0; font-weight: bold;"></div>
+
+        <form id="login-form">
             <div class="form-group">
-                <input type="email" id="email" placeholder="Correo electrónico" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="tu@email.com">
             </div>
+
             <div class="form-group">
-                <input type="password" id="password" placeholder="Contraseña" required>
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required>
             </div>
-            
-            <button type="submit" id="submit-btn" class="btn-login" style="width: 100%; border: none; cursor: pointer; margin-top: 10px;">
-                Entrar
-            </button>
+
+            <button type="submit" class="btn-primary">Entrar</button>
         </form>
 
-        <div style="margin-top: 20px;">
-            <p class="workout-meta">
-                <span id="toggle-text">¿No tienes cuenta?</span> 
-                <a href="#" id="toggle-auth" style="color: var(--accent-color); text-decoration: none; font-weight: bold;">Regístrate</a>
-            </p>
-        </div>
-        <div id="message" style="margin-top: 15px; font-size: 0.9rem; min-height: 20px;"></div>
+        <p style="text-align:center; margin-top:30px;">
+            ¿No tienes cuenta? <a href="/registro" style="color:#1e90ff; text-decoration:underline;">Regístrate aquí</a>
+        </p>
     </div>
 </main>
-
-<% if (error) { %>
-    <p style="color: red; text-align: center; margin-top: 20px;"><%= error %></p>
-<% } %>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <script>
-
 const firebaseConfig = {
-     apiKey: "AIzaSyA0w8YQWXLYoblPD2Ma1Ly0_tHN7c_Qu04",
-  authDomain: "toji-gym.firebaseapp.com",
-  projectId: "toji-gym",
-  storageBucket: "toji-gym.firebasestorage.app",
-  messagingSenderId: "713518995736",
-  appId: "1:713518995736:web:8777e9284e86782d21e66d",
-  measurementId: "G-V7JQQ0PVR5"
+    apiKey: "AIzaSyA0w8YQWXLYoblPD2Ma1Ly0_tHN7c_Qu04", 
+    authDomain: "toji-gym.firebaseapp.com",
+    projectId: "toji-gym",
+    storageBucket: "toji-gym.firebasestorage.app",
+    messagingSenderId: "713518995736",
+    appId: "1:713518995736:web:8777e9284e86782d21e66d"
 };
 
 firebase.initializeApp(firebaseConfig);
 
-document.querySelector('form').addEventListener('submit', async (e) => {
+document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.querySelector('input[type="email"]').value;
-    const password = document.querySelector('input[type="password"]').value;
+
+    const mensaje = document.getElementById('mensaje');
+    mensaje.textContent = '';
+    mensaje.style.color = '';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Completa email y contraseña';
+        return;
+    }
+
+    mensaje.textContent = 'Iniciando sesión...';
+    mensaje.style.color = '#666';
 
     try {
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -68,11 +72,22 @@ document.querySelector('form').addEventListener('submit', async (e) => {
             body: JSON.stringify({ idToken })
         });
 
-        if (response.redirected) {
-            window.location.href = response.url;
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            mensaje.style.color = 'green';
+            mensaje.textContent = '¡Sesión iniciada! Redirigiendo...';
+            setTimeout(() => {
+                window.location.href = result.redirect || '/ejercicios';
+            }, 1000);
+        } else {
+            mensaje.style.color = 'red';
+            mensaje.textContent = result.error || 'Error al iniciar sesión';
         }
     } catch (error) {
-        alert('Error al iniciar sesión: ' + error.message);
+        console.error('Error Firebase:', error);
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'Error al iniciar sesión: ' + error.message;
     }
 });
 </script>

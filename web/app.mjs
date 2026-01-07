@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import fetch from 'node-fetch';
-import './services/firebase.mjs'; 
+import { auth } from './services/firebase.mjs';
 import viewRoutes from './routes/views.routes.mjs';
 import { isAuthenticated } from './middlewares/auth.middleware.mjs';
 
@@ -19,6 +19,48 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+
+app.post('/login', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        
+        if (!idToken) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Token no proporcionado' 
+            });
+        }
+
+        const decodedToken = await auth.verifyIdToken(idToken);
+        
+        res.cookie('idToken', idToken, {
+            maxAge: 60 * 60 * 24 * 5 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax'
+        });
+
+        res.json({ 
+            success: true, 
+            redirect: '/ejercicios',
+            uid: decodedToken.uid 
+        });
+
+    } catch (error) {
+        console.error('Error en login:', error);
+        res.status(401).json({ 
+            success: false, 
+            error: 'Autenticación fallida: ' + error.message 
+        });
+    }
+});
+
+app.post('/logout', (req, res) => {
+    res.clearCookie('idToken');
+    res.json({ success: true, redirect: '/login' });
+});
+
 
 app.get('/api/ejercicios', isAuthenticated, async (req, res) => {
     const idToken = req.cookies.idToken;
@@ -75,6 +117,25 @@ app.put('/api/ejercicios/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+app.delete('/api/ejercicios/:id', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch(`http://localhost:4000/api/ejercicios/${req.params.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${idToken}`
+            }
+        });
+
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente DELETE ejercicio:', err.message);
+        res.status(500).json({ error: 'Error al eliminar ejercicio' });
+    }
+});
+
 app.get('/api/rutinas', isAuthenticated, async (req, res) => {
     const idToken = req.cookies.idToken;
 
@@ -107,25 +168,6 @@ app.post('/api/rutinas', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Error puente POST rutinas:', err.message);
         res.status(500).json({ error: 'Error al crear rutina' });
-    }
-});
-
-app.delete('/api/ejercicios/:id', isAuthenticated, async (req, res) => {
-    const idToken = req.cookies.idToken;
-
-    try {
-        const apiRes = await fetch(`http://localhost:4000/api/ejercicios/${req.params.id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${idToken}`
-            }
-        });
-
-        const data = await apiRes.json();
-        res.status(apiRes.status).json(data);
-    } catch (err) {
-        console.error('Error puente DELETE ejercicio:', err.message);
-        res.status(500).json({ error: 'Error al eliminar ejercicio' });
     }
 });
 
@@ -167,6 +209,43 @@ app.delete('/api/rutinas/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+
+app.post('/api/entrenamientos/guardar', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch('http://localhost:4000/api/entrenamientos/guardar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify(req.body)
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente POST entrenamientos/guardar:', err.message);
+        res.status(500).json({ error: 'Error al guardar entrenamiento' });
+    }
+});
+
+app.get('/api/entrenamientos', isAuthenticated, async (req, res) => {
+    const idToken = req.cookies.idToken;
+
+    try {
+        const apiRes = await fetch('http://localhost:4000/api/entrenamientos', {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        const data = await apiRes.json();
+        res.status(apiRes.status).json(data);
+    } catch (err) {
+        console.error('Error puente GET entrenamientos:', err.message);
+        res.status(500).json({ error: 'Error al cargar entrenamientos' });
+    }
+});
+
+
 app.use('/', viewRoutes);
 
 app.use((req, res) => {
@@ -176,7 +255,8 @@ app.use((req, res) => {
     `);
 });
 
+
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(` Servidor en ${PORT}`);
+    console.log(`Servidor en ${PORT}`);
 });

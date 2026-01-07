@@ -53,24 +53,31 @@ async function cargarRutinas() {
 
         rutinas.forEach(rutina => {
             const card = document.createElement('div');
-            card.className = 'workout-card';
+            card.className = 'card-ejercicio';
             card.style.marginBottom = '20px';
 
             let ejerciciosHTML = '';
             if (rutina.ejercicios && rutina.ejercicios.length > 0) {
                 const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular || 'Sin grupo'))];
-                ejerciciosHTML = `<p class="workout-meta">${grupos.join(', ')}</p>`;
+                ejerciciosHTML = `<span class="tag">${grupos.join(', ')}</span>`;
             } else {
-                ejerciciosHTML = '<p class="workout-meta">Sin ejercicios asignados</p>';
+                ejerciciosHTML = '<span class="tag">Sin ejercicios</span>';
             }
 
             card.innerHTML = `
-                <div class="workout-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div>
-                        <span class="workout-title">${rutina.nombre}</span>
-                        <span class="workout-meta">${rutina.ejercicios ? rutina.ejercicios.length : 0} Ejercicios</span>
+                        <h3 style="margin: 0 0 8px 0;">${rutina.nombre}</h3>
+                        ${ejerciciosHTML}
+                        <p style="margin: 10px 0; color:#ccc;">
+                            ${rutina.descripcion || 'Sin descripción'}
+                        </p>
+                        <small style="color:#aaa;">Ejercicios: ${rutina.ejercicios ? rutina.ejercicios.length : 0}</small>
                     </div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <a href="/entrenamiento/${rutina.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px; text-align:center;">
+                            Iniciar Entrenamiento
+                        </a>
                         <a href="/rutinas/editar/${rutina.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px;">
                             Editar
                         </a>
@@ -79,8 +86,6 @@ async function cargarRutinas() {
                         </button>
                     </div>
                 </div>
-                ${ejerciciosHTML}
-                ${rutina.descripcion ? `<p style="margin: 10px 0; color: #aaa;">${rutina.descripcion}</p>` : ''}
             `;
 
             contenedor.appendChild(card);

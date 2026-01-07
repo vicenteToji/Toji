@@ -31,10 +31,9 @@ router.get('/ejercicios/editar/:id', isAuthenticated, async (req, res) => {
         });
 
         if (!apiRes.ok) {
-            const errorData = await apiRes.json().catch(() => ({}));
             return res.status(apiRes.status).send(`
                 <h1>Ejercicio no encontrado</h1>
-                <p>${errorData.error || 'El ejercicio no existe o no te pertenece.'}</p>
+                <p>El ejercicio no existe o no te pertenece.</p>
                 <a href="/ejercicios">Volver a mis ejercicios</a>
             `);
         }
@@ -43,7 +42,6 @@ router.get('/ejercicios/editar/:id', isAuthenticated, async (req, res) => {
 
         res.render('completes/editar-ejercicio', { title: 'Editar Ejercicio', ejercicio });
     } catch (err) {
-        console.error('Error al cargar ejercicio para editar:', err);
         res.status(500).send(`
             <h1>Error del servidor</h1>
             <p>No se pudo cargar el ejercicio.</p>
@@ -64,7 +62,7 @@ router.get('/rutinas/editar/:id', isAuthenticated, async (req, res) => {
     const rutinaId = req.params.id;
 
     try {
-        const apiRes = await fetch(`http://localhost:3000/api/rutinas`, {
+        const apiRes = await fetch('http://localhost:3000/api/rutinas', {
             headers: { 'Cookie': req.headers.cookie || '' }
         });
 
@@ -81,16 +79,38 @@ router.get('/rutinas/editar/:id', isAuthenticated, async (req, res) => {
             `);
         }
 
-        const ejRes = await fetch(`http://localhost:3000/api/ejercicios`, {
+        res.render('completes/editar-rutina', { title: 'Editar Rutina', rutina });
+    } catch (err) {
+        res.status(500).send('<h1>Error del servidor</h1><a href="/rutinas">Volver</a>');
+    }
+});
+
+router.get('/entrenamiento/:id', isAuthenticated, async (req, res) => {
+    const rutinaId = req.params.id;
+
+    try {
+        const apiRes = await fetch('http://localhost:3000/api/rutinas', {
             headers: { 'Cookie': req.headers.cookie || '' }
         });
 
-        const ejercicios = await ejRes.json();
+        if (!apiRes.ok) throw new Error('Error al cargar rutinas');
 
-        rutina.ejercicios = rutina.ejercicios || [];
-        res.render('completes/editar-rutina', { title: 'Editar Rutina', rutina, ejercicios });
+        const rutinas = await apiRes.json();
+        const rutina = rutinas.find(r => r.id == rutinaId);
+
+        if (!rutina) {
+            return res.status(404).render('completes/error', { 
+                message: 'Rutina no encontrada o no te pertenece' 
+            });
+        }
+
+        res.render('completes/entrenamiento', { 
+            title: `Entrenamiento: ${rutina.nombre}`, 
+            rutina 
+        });
     } catch (err) {
-        res.status(500).send('<h1>Error del servidor</h1><a href="/rutinas">Volver</a>');
+        console.error('Error al cargar entrenamiento:', err);
+        res.status(500).render('completes/error', { message: 'Error del servidor' });
     }
 });
 
