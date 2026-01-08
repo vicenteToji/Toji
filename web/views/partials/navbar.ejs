@@ -27,7 +27,11 @@
         </li>
     </ul>
 
-    <div class="nav-auth">
-        <a href="/login" class="btn-login">Iniciar Sesión</a>
-    </div>
+<div class="fixed-button left-aligned">
+  <% if (locals.user && locals.user.id) { %>
+    <a href="/logout" class="btn-end-session">Cerrar Sesión</a>
+  <% } else { %>
+    <a href="/login" class="btn-start-session">Iniciar Sesión</a>
+  <% } %>
+</div>
 </nav>

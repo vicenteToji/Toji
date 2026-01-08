@@ -2,123 +2,103 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <div class="header-section">
-        <h1>Mis Rutinas</h1>
-        <a href="/rutinas/nueva" class="btn-primary">+ Nueva Rutina</a>
-    </div>
+  <div class="header-section">
+    <h1 class="page-title">Mis Rutinas</h1>
+    <a href="/rutinas/nueva" class="btn-primary-large">+ Nueva Rutina</a>
+  </div>
 
-    <div id="lista-rutinas">
-        <p style="text-align:center; color:#666;">Cargando tus rutinas...</p>
-    </div>
+  <div id="lista-rutinas" class="grid-rutinas">
+    <p class="loading-text">Cargando tus rutinas...</p>
+  </div>
 </main>
 
 <script>
 const API_URL = '/api/rutinas';
 
 document.addEventListener('DOMContentLoaded', () => {
-    cargarRutinas();
+  cargarRutinas();
 });
 
 async function cargarRutinas() {
-    const contenedor = document.getElementById('lista-rutinas');
+  const contenedor = document.getElementById('lista-rutinas');
 
-    try {
-        const response = await fetch(API_URL, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+  try {
+    const response = await fetch(API_URL);
 
-        if (!response.ok) {
-            if (response.status === 401) {
-                contenedor.innerHTML = '<p style="color:orange; text-align:center;">Sesión expirada. <a href="/login">Inicia sesión de nuevo</a>.</p>';
-                return;
-            }
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const rutinas = await response.json();
-
-        contenedor.innerHTML = '';
-
-        if (!rutinas || rutinas.length === 0) {
-            contenedor.innerHTML = `
-                <div style="text-align:center; color:#999; margin-top:50px;">
-                    <p>Aún no tienes rutinas creadas.</p>
-                    <a href="/rutinas/nueva" class="btn-primary">Crea tu primera rutina</a>
-                </div>`;
-            return;
-        }
-
-        rutinas.forEach(rutina => {
-            const card = document.createElement('div');
-            card.className = 'card-ejercicio';
-            card.style.marginBottom = '20px';
-
-            let ejerciciosHTML = '';
-            if (rutina.ejercicios && rutina.ejercicios.length > 0) {
-                const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular || 'Sin grupo'))];
-                ejerciciosHTML = `<span class="tag">${grupos.join(', ')}</span>`;
-            } else {
-                ejerciciosHTML = '<span class="tag">Sin ejercicios</span>';
-            }
-
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h3 style="margin: 0 0 8px 0;">${rutina.nombre}</h3>
-                        ${ejerciciosHTML}
-                        <p style="margin: 10px 0; color:#ccc;">
-                            ${rutina.descripcion || 'Sin descripción'}
-                        </p>
-                        <small style="color:#aaa;">Ejercicios: ${rutina.ejercicios ? rutina.ejercicios.length : 0}</small>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <a href="/entrenamiento/${rutina.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px; text-align:center;">
-                            Iniciar Entrenamiento
-                        </a>
-                        <a href="/rutinas/editar/${rutina.id}" class="btn-small" style="background:#444; color:#fff; padding:6px 12px; text-decoration:none; border-radius:4px;">
-                            Editar
-                        </a>
-                        <button onclick="eliminarRutina(${rutina.id})" class="btn-small" style="background:#a00; color:#fff; padding:6px 12px; border:none; border-radius:4px; cursor:pointer;">
-                            Eliminar
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            contenedor.appendChild(card);
-        });
-
-    } catch (error) {
-        console.error('Error cargando rutinas:', error);
-        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar rutinas. Intenta recargar la página.</p>';
+    if (!response.ok) {
+      if (response.status === 401) {
+        contenedor.innerHTML = '<p class="error-text">Sesión expirada. <a href="/login">Inicia sesión de nuevo</a>.</p>';
+        return;
+      }
+      throw new Error(`Error HTTP: ${response.status}`);
     }
+
+    const rutinas = await response.json();
+
+    contenedor.innerHTML = '';
+
+    if (rutinas.length === 0) {
+      contenedor.innerHTML = `
+        <div class="empty-message">
+          <p>Aún no tienes rutinas creadas.</p>
+          <a href="/rutinas/nueva" class="btn-primary-large">Crea tu primera rutina</a>
+        </div>`;
+      return;
+    }
+
+    rutinas.forEach(rutina => {
+      const card = document.createElement('div');
+      card.className = 'card-rutina';
+
+      let tagsHTML = '';
+      if (rutina.ejercicios && rutina.ejercicios.length > 0) {
+        const grupos = [...new Set(rutina.ejercicios.map(e => e.grupo_muscular || 'Sin grupo'))];
+        tagsHTML = grupos.map(g => `<span class="tag">${g}</span>`).join('');
+      } else {
+        tagsHTML = '<span class="tag">Sin ejercicios</span>';
+      }
+
+      card.innerHTML = `
+        <h3>${rutina.nombre}</h3>
+        <div class="tags">${tagsHTML}</div>
+        <p class="descripcion">${rutina.descripcion || 'Sin descripción'}</p>
+        <small>Ejercicios: ${rutina.ejercicios ? rutina.ejercicios.length : 0}</small>
+        <div class="card-actions">
+          <a href="/entrenamiento/${rutina.id}" class="btn-small btn-primary-small">Iniciar Entrenamiento</a>
+          <a href="/rutinas/editar/${rutina.id}" class="btn-small btn-secondary-small">Editar</a>
+          <button onclick="eliminarRutina(${rutina.id})" class="btn-small btn-danger-small">Eliminar</button>
+        </div>
+      `;
+
+      contenedor.appendChild(card);
+    });
+  } catch (error) {
+    console.error('Error cargando rutinas:', error);
+    contenedor.innerHTML = '<p class="error-text">Error al cargar rutinas. Intenta recargar la página.</p>';
+  }
 }
 
 async function eliminarRutina(id) {
-    if (!confirm('¿Estás seguro de eliminar esta rutina? Esta acción no se puede deshacer.')) {
-        return;
+  if (!confirm('¿Estás seguro de eliminar esta rutina? Esta acción no se puede deshacer.')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      alert('Rutina eliminada con éxito');
+      location.reload();
+    } else {
+      const result = await response.json();
+      alert(result.error || 'Error al eliminar la rutina');
     }
-
-    try {
-        const response = await fetch(`/api/rutinas/${id}`, {
-            method: 'DELETE'
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Rutina eliminada con éxito');
-            location.reload();
-        } else {
-            alert(result.error || 'Error al eliminar la rutina');
-        }
-    } catch (err) {
-        console.error('Error al eliminar rutina:', err);
-        alert('Error de conexión al eliminar');
-    }
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Error de conexión al eliminar');
+  }
 }
 </script>
 

@@ -2,89 +2,132 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <div class="header-section">
-        <h1>Añadir Técnica</h1>
+<div class="form-container">
+  <h1 class="page-title">Añadir Técnica</h1>
+
+  <form id="nuevoEjercicioForm" class="exercise-form">
+    <div class="form-group">
+      <label for="nombre">Nombre</label>
+      <input 
+        type="text" 
+        id="nombre" 
+        name="nombre" 
+        placeholder="Ej: Dominadas" 
+        required 
+      />
     </div>
 
-    <form id="form-nuevo-ejercicio">
-        <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" name="nombre" required placeholder="Ej: Dominadas">
-        </div>
+    <div class="form-group">
+      <label for="grupoMuscular">Grupo Muscular</label>
+      <select id="grupoMuscular" name="grupoMuscular" required>
+        <option value="" disabled selected>Selecciona un grupo</option>
+        <option value="Espalda">Espalda</option>
+        <option value="Pecho">Pecho</option>
+        <option value="Hombros">Hombros</option>
+        <option value="Bíceps">Bíceps</option>
+        <option value="Tríceps">Tríceps</option>
+        <option value="Antebrazos">Antebrazos</option>
+        <option value="Piernas">Piernas</option>
+        <option value="Gemelos">Gemelos</option>
+        <option value="Abdominales">Abdominales</option>
+        <option value="Core">Core</option>
+        <option value="Otros">Otros</option>
+      </select>
+    </div>
 
-        <div class="form-group">
-            <label for="grupo_muscular">Grupo Muscular</label>
-            <input type="text" id="grupo_muscular" name="grupo_muscular" required placeholder="Ej: Espalda">
-        </div>
+    <div class="form-group">
+      <label for="descripcion">Descripción <span class="optional">(Opcional)</span></label>
+      <textarea 
+        id="descripcion" 
+        name="descripcion" 
+        rows="4" 
+        placeholder="Describe la técnica..."
+      ></textarea>
+    </div>
 
-        <div class="form-group">
-            <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" name="descripcion" rows="4" placeholder="Opcional: describe la técnica..."></textarea>
-        </div>
+    <div class="form-group">
+      <label for="equipo">Equipo <span class="optional">(Opcional)</span></label>
+      <input 
+        type="text" 
+        id="equipo" 
+        name="equipo" 
+        placeholder="Ej: Barra fija" 
+      />
+    </div>
 
-        <div class="form-group">
-            <label for="equipo">Equipo (opcional)</label>
-            <input type="text" id="equipo" name="equipo" placeholder="Ej: Barra fija">
-        </div>
-
-        <button type="submit" class="btn-primary">Guardar Ejercicio</button>
-    </form>
-
-    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 1.1em;"></div>
+<div class="button-group">
+  <button type="submit" class="btn-primary-large">
+    Guardar Cambios
+  </button>
+  <a href="/ejercicios" class="btn-secondary-large">
+    Cancelar
+  </a>
+</div>
+  </form>
+</div>
 </main>
 
 <script>
 const API_URL = '/api/ejercicios';
 
-document.getElementById('form-nuevo-ejercicio').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.getElementById('nuevoEjercicioForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const mensaje = document.getElementById('mensaje');
-    mensaje.textContent = 'Guardando ejercicio...';
-    mensaje.style.color = '#666';
+  let mensaje = document.getElementById('mensaje-feedback');
+  if (!mensaje) {
+    mensaje = document.createElement('p');
+    mensaje.id = 'mensaje-feedback';
+    mensaje.style.marginTop = '20px';
+    mensaje.style.fontSize = '16px';
+    mensaje.style.textAlign = 'center';
+    document.querySelector('.exercise-form').appendChild(mensaje);
+  }
 
-    const ejercicio = {
-        nombre: document.getElementById('nombre').value.trim(),
-        grupo_muscular: document.getElementById('grupo_muscular').value.trim(),
-        descripcion: document.getElementById('descripcion').value.trim() || null,
-        equipo: document.getElementById('equipo').value.trim() || null
-    };
+  mensaje.textContent = 'Guardando ejercicio...';
+  mensaje.style.color = '#3498db';
 
-    if (!ejercicio.nombre || !ejercicio.grupo_muscular) {
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'Nombre y Grupo Muscular son obligatorios.';
-        return;
+  const ejercicio = {
+    nombre: document.getElementById('nombre').value.trim(),
+    grupo_muscular: document.getElementById('grupoMuscular').value,
+    descripcion: document.getElementById('descripcion').value.trim() || null,
+    equipo: document.getElementById('equipo').value.trim() || null
+  };
+
+  if (!ejercicio.nombre || !ejercicio.grupo_muscular) {
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Nombre y Grupo Muscular son obligatorios.';
+    return;
+  }
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(ejercicio)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      mensaje.style.color = '#2ecc71';
+      mensaje.textContent = '¡Ejercicio creado con éxito! Redirigiendo...';
+
+      document.getElementById('nuevoEjercicioForm').reset();
+s
+      setTimeout(() => {
+        window.location.href = '/ejercicios';
+      }, 1500);
+    } else {
+      mensaje.style.color = '#e74c3c';
+      mensaje.textContent = result.error || 'Error al guardar el ejercicio.';
     }
-
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(ejercicio)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            mensaje.style.color = 'green';
-            mensaje.textContent = '¡Ejercicio creado con éxito! Redirigiendo a tu biblioteca...';
-            
-            document.getElementById('form-nuevo-ejercicio').reset();
-
-            setTimeout(() => {
-                window.location.href = '/ejercicios';
-            }, 1500);
-        } else {
-            mensaje.style.color = 'red';
-            mensaje.textContent = result.error || 'Error al guardar el ejercicio. Inténtalo de nuevo.';
-        }
-    } catch (error) {
-        console.error('Error de conexión:', error);
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'Error de conexión. Asegúrate de que ambos servidores (web y api) estén corriendo.';
-    }
+  } catch (error) {
+    console.error('Error:', error);
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Error de conexión. Verifica que el servidor API esté corriendo en puerto 4000.';
+  }
 });
 </script>
 

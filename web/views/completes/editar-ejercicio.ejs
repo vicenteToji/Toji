@@ -2,38 +2,74 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <div class="header-section">
-        <h1>Editar Ejercicio</h1>
-    </div>
+  <div class="form-container">
+    <h1 class="page-title">Editar Ejercicio</h1>
 
-    <form id="form-editar-ejercicio">
-        <input type="hidden" id="ejercicio-id" value="<%= ejercicio.id %>">
+    <form id="form-editar-ejercicio" class="exercise-form">
+      <input type="hidden" id="ejercicio-id" value="<%= ejercicio.id %>">
 
-        <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" value="<%= ejercicio.nombre %>" required>
-        </div>
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input 
+          type="text" 
+          id="nombre" 
+          name="nombre" 
+          value="<%= ejercicio.nombre %>" 
+          placeholder="Ej: Dominadas" 
+          required 
+        />
+      </div>
 
-        <div class="form-group">
-            <label for="grupo_muscular">Grupo Muscular</label>
-            <input type="text" id="grupo_muscular" value="<%= ejercicio.grupo_muscular %>" required>
-        </div>
+      <div class="form-group">
+        <label for="grupoMuscular">Grupo Muscular</label>
+        <select id="grupoMuscular" name="grupoMuscular" required>
+          <option value="" disabled>Selecciona un grupo</option>
+          <option value="Espalda" <%= ejercicio.grupo_muscular === 'Espalda' ? 'selected' : '' %>>Espalda</option>
+          <option value="Pecho" <%= ejercicio.grupo_muscular === 'Pecho' ? 'selected' : '' %>>Pecho</option>
+          <option value="Hombros" <%= ejercicio.grupo_muscular === 'Hombros' ? 'selected' : '' %>>Hombros</option>
+          <option value="Bíceps" <%= ejercicio.grupo_muscular === 'Bíceps' ? 'selected' : '' %>>Bíceps</option>
+          <option value="Tríceps" <%= ejercicio.grupo_muscular === 'Tríceps' ? 'selected' : '' %>>Tríceps</option>
+          <option value="Antebrazos" <%= ejercicio.grupo_muscular === 'Antebrazos' ? 'selected' : '' %>>Antebrazos</option>
+          <option value="Piernas" <%= ejercicio.grupo_muscular === 'Piernas' ? 'selected' : '' %>>Piernas</option>
+          <option value="Gemelos" <%= ejercicio.grupo_muscular === 'Gemelos' ? 'selected' : '' %>>Gemelos</option>
+          <option value="Abdominales" <%= ejercicio.grupo_muscular === 'Abdominales' ? 'selected' : '' %>>Abdominales</option>
+          <option value="Core" <%= ejercicio.grupo_muscular === 'Core' ? 'selected' : '' %>>Core</option>
+          <option value="Otros" <%= ejercicio.grupo_muscular === 'Otros' ? 'selected' : '' %>>Otros</option>
+        </select>
+      </div>
 
-        <div class="form-group">
-            <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" rows="4"><%= ejercicio.descripcion || '' %></textarea>
-        </div>
+      <div class="form-group">
+        <label for="descripcion">Descripción <span class="optional">(Opcional)</span></label>
+        <textarea 
+          id="descripcion" 
+          name="descripcion" 
+          rows="4" 
+          placeholder="Describe la técnica..."
+        ><%= ejercicio.descripcion || '' %></textarea>
+      </div>
 
-        <div class="form-group">
-            <label for="equipo">Equipo (opcional)</label>
-            <input type="text" id="equipo" value="<%= ejercicio.equipo || '' %>">
-        </div>
-
-        <button type="submit" class="btn-primary">Guardar Cambios</button>
-        <a href="/ejercicios" class="btn-secondary" style="margin-left: 10px;">Cancelar</a>
+      <div class="form-group">
+        <label for="equipo">Equipo <span class="optional">(Opcional)</span></label>
+        <input 
+          type="text" 
+          id="equipo" 
+          name="equipo" 
+          value="<%= ejercicio.equipo || '' %>" 
+          placeholder="Ej: Barra fija" 
+        />
+      </div>
+<div class="button-group">
+  <button type="submit" class="btn-primary-large">
+    Guardar Cambios
+  </button>
+  <a href="/ejercicios" class="btn-secondary-large">
+    Cancelar
+  </a>
+</div>
     </form>
 
-    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold;"></div>
+    <div id="mensaje-feedback"></div>
+  </div>
 </main>
 
 <script>
@@ -41,40 +77,55 @@ const API_URL = '/api/ejercicios';
 const ejercicioId = document.getElementById('ejercicio-id').value;
 
 document.getElementById('form-editar-ejercicio').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const mensaje = document.getElementById('mensaje');
-    mensaje.textContent = 'Guardando cambios...';
-    mensaje.style.color = '#666';
+  let mensaje = document.getElementById('mensaje-feedback');
+  if (!mensaje) {
+    mensaje = document.createElement('p');
+    mensaje.id = 'mensaje-feedback';
+    document.querySelector('.form-container').appendChild(mensaje);
+  }
 
-    const ejercicio = {
-        nombre: document.getElementById('nombre').value.trim(),
-        grupo_muscular: document.getElementById('grupo_muscular').value.trim(),
-        descripcion: document.getElementById('descripcion').value.trim() || null,
-        equipo: document.getElementById('equipo').value.trim() || null
-    };
+  mensaje.textContent = 'Guardando cambios...';
+  mensaje.style.color = '#3498db';
 
-    try {
-        const response = await fetch(`${API_URL}/${ejercicioId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ejercicio)
-        });
+  const ejercicio = {
+    nombre: document.getElementById('nombre').value.trim(),
+    grupo_muscular: document.getElementById('grupoMuscular').value,
+    descripcion: document.getElementById('descripcion').value.trim() || null,
+    equipo: document.getElementById('equipo').value.trim() || null
+  };
 
-        const result = await response.json();
+  if (!ejercicio.nombre || !ejercicio.grupo_muscular) {
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Nombre y Grupo Muscular son obligatorios.';
+    return;
+  }
 
-        if (response.ok) {
-            mensaje.style.color = 'green';
-            mensaje.textContent = '¡Ejercicio actualizado con éxito! Redirigiendo...';
-            setTimeout(() => location.href = '/ejercicios', 1500);
-        } else {
-            mensaje.style.color = 'red';
-            mensaje.textContent = result.error || 'Error al actualizar';
-        }
-    } catch (err) {
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'Error de conexión';
+  try {
+    const response = await fetch(`${API_URL}/${ejercicioId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ejercicio)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      mensaje.style.color = '#2ecc71';
+      mensaje.textContent = '¡Ejercicio actualizado con éxito! Redirigiendo...';
+      setTimeout(() => {
+        window.location.href = '/ejercicios';
+      }, 1500);
+    } else {
+      mensaje.style.color = '#e74c3c';
+      mensaje.textContent = result.error || 'Error al actualizar el ejercicio.';
     }
+  } catch (err) {
+    console.error('Error:', err);
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Error de conexión con el servidor.';
+  }
 });
 </script>
 

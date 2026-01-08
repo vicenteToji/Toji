@@ -3,12 +3,16 @@ import { isAuthenticated } from '../middlewares/auth.middleware.mjs';
 
 const router = Router();
 
-router.get('/', (req, res) => {
+router.get('/', isAuthenticated, (req, res) => {
     res.render('completes/index', { title: 'Toji - Home' });
 });
 
 router.get('/login', (req, res) => {
     res.render('completes/login', { title: 'Iniciar Sesión' });
+});
+
+router.get('/registro', (req, res) => {
+  res.render('completes/registro', { title: 'Registrarse' });
 });
 
 router.get('/ejercicios', isAuthenticated, (req, res) => {
@@ -112,6 +116,10 @@ router.get('/entrenamiento/:id', isAuthenticated, async (req, res) => {
         console.error('Error al cargar entrenamiento:', err);
         res.status(500).render('completes/error', { message: 'Error del servidor' });
     }
+});
+
+router.get('/perfil', isAuthenticated, (req, res) => {
+  res.render('completes/perfil');
 });
 
 export default router;

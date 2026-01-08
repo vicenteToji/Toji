@@ -2,138 +2,196 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <div class="header-section">
-        <h1>Entrenamiento: <%= rutina.nombre %></h1>
-        <button id="terminar-entreno" class="btn-primary">Terminar Entrenamiento</button>
+  <div class="form-container entrenamiento-container">
+    <div class="entrenamiento-header">
+      <h1 class="page-title">Entrenamiento: <%= rutina.nombre %></h1>
+      <button id="terminar-entreno" class="btn-primary-large">Terminar Entrenamiento</button>
     </div>
 
-    <div class="grid-ejercicios">
-        <% rutina.ejercicios.forEach((ejercicio, ejIndex) => { %>
-            <div class="card-ejercicio" data-ejercicio-id="<%= ejercicio.id %>">
-                <h3><%= ejercicio.nombre %></h3>
-                <span class="tag"><%= ejercicio.grupo_muscular || 'Sin grupo' %></span>
-                <p><%= ejercicio.descripcion || 'Sin descripción' %></p>
-                <small>Equipo: <%= ejercicio.equipo || 'Ninguno' %></small>
+    <div class="grid-entrenamiento">
+      <% rutina.ejercicios.forEach((ejercicio, ejIndex) => { %>
+        <div class="card-entrenamiento" data-ejercicio-id="<%= ejercicio.id %>" data-ej-index="<%= ejIndex %>">
+          <h3><%= ejercicio.nombre %></h3>
+          <span class="tag"><%= ejercicio.grupo_muscular || 'Sin grupo' %></span>
+          <p class="descripcion"><%= ejercicio.descripcion || 'Sin descripción' %></p>
+          <small>Equipo: <%= ejercicio.equipo || 'Ninguno' %></small>
 
-                <div style="margin-top: 20px;">
-                    <p><strong>Notas:</strong></p>
-                    <textarea class="notas-input" data-ej-index="<%= ejIndex %>" rows="3" placeholder="Agregar notas..."></textarea>
-                </div>
+          <div class="form-group notas-group">
+            <label>Notas</label>
+            <textarea 
+              class="notas-input" 
+              data-ej-index="<%= ejIndex %>" 
+              rows="3" 
+              placeholder="Agregar notas para este ejercicio..."
+            ></textarea>
+          </div>
 
-                <div style="margin-top: 20px;">
-                    <p><strong>Descanso:</strong> APAGADO</p>
-                </div>
+          <div class="series-section">
+            <table class="series-table">
+              <thead>
+                <tr>
+                  <th>SERIE</th>
+                  <th>ANTERIOR</th>
+                  <th>KG</th>
+                  <th>REPS</th>
+                  <th>✓</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody class="series-body" data-ej-index="<%= ejIndex %>">
+              </tbody>
+            </table>
 
-                <table style="width: 100%; margin-top: 15px;">
-                    <thead>
-                        <tr>
-                            <th>SERIE</th>
-                            <th>ANTERIOR</th>
-                            <th>KG</th>
-                            <th>REPS</th>
-                            <th>✓</th>
-                        </tr>
-                    </thead>
-                    <tbody class="series-body" data-ej-index="<%= ejIndex %>">
-                        <tr>
-                            <td>1</td>
-                            <td>-</td>
-                            <td><input type="number" class="kg-input" placeholder="kg" step="0.5"></td>
-                            <td><input type="number" class="reps-input" placeholder="reps"></td>
-                            <td><input type="checkbox"></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>-</td>
-                            <td><input type="number" class="kg-input" placeholder="kg" step="0.5"></td>
-                            <td><input type="number" class="reps-input" placeholder="reps"></td>
-                            <td><input type="checkbox"></td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <button class="add-serie" data-ej-index="<%= ejIndex %>">+ Agregar Serie</button>
-            </div>
-        <% }) %>
+            <button type="button" class="btn-add-serie" data-ej-index="<%= ejIndex %>">
+              + Agregar Serie
+            </button>
+          </div>
+        </div>
+      <% }) %>
     </div>
+
+    <div id="mensaje-feedback"></div>
+  </div>
 </main>
 
 <script>
-let ejerciciosData = [];
+const rutinaId = <%= rutina.id %>;
+const ejerciciosData = <%- JSON.stringify(rutina.ejercicios) %>;
 
-<% rutina.ejercicios.forEach((ej, index) => { %>
-ejerciciosData.push({
-    id: <%= ej.id %>,
-    nombre: '<%= ej.nombre %>',
-    series: []
+ejerciciosData.forEach((ej, ejIndex) => {
+  const tbody = document.querySelector(`.series-body[data-ej-index="${ejIndex}"]`);
+  agregarSerie(tbody, ejIndex, 1);
 });
-<% }) %>
 
-document.querySelectorAll('.add-serie').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const ejIndex = parseInt(e.target.dataset.ejIndex);
-        const tbody = document.querySelector(`.series-body[data-ej-index="${ejIndex}"]`);
-        const serieNum = tbody.children.length + 1;
+function agregarSerie(tbody, ejIndex, numeroSerie) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${numeroSerie}</td>
+    <td>-</td>
+    <td><input type="number" class="kg-input" placeholder="kg" min="0" step="0.5"></td>
+    <td><input type="number" class="reps-input" placeholder="reps" min="0"></td>
+    <td><input type="checkbox" class="serie-completada"></td>
+    <td><button type="button" class="btn-delete-serie">✕</button></td>
+  `;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${serieNum}</td>
-            <td>-</td>
-            <td><input type="number" class="kg-input" placeholder="kg" step="0.5"></td>
-            <td><input type="number" class="reps-input" placeholder="reps"></td>
-            <td><input type="checkbox"></td>
-        `;
+  tr.querySelector('.btn-delete-serie').addEventListener('click', () => {
+    if (tbody.children.length > 1) {
+      tr.remove();
+      renumerarSeries(tbody);
+    } else {
+      mostrarMensajeFeedback('Debe haber al menos una serie', 'error');
+    }
+  });
 
-        tbody.appendChild(tr);
-    });
+  tbody.appendChild(tr);
+}
+
+function renumerarSeries(tbody) {
+  Array.from(tbody.children).forEach((row, i) => {
+    row.querySelector('td:first-child').textContent = i + 1;
+  });
+}
+
+document.querySelectorAll('.btn-add-serie').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const ejIndex = btn.dataset.ejIndex;
+    const tbody = document.querySelector(`.series-body[data-ej-index="${ejIndex}"]`);
+    const numeroSerie = tbody.children.length + 1;
+    agregarSerie(tbody, ejIndex, numeroSerie);
+  });
 });
 
 document.getElementById('terminar-entreno').addEventListener('click', async () => {
-    if (!confirm('¿Terminar el entrenamiento y guardar?')) return;
+  if (!confirm('¿Terminar el entrenamiento y guardar los datos?')) {
+    return;
+  }
 
-    const entrenamientoData = {
-        rutina_id: <%= rutina.id %>,
-        notas: '', 
-        ejercicios: ejerciciosData.map((ej, ejIndex) => {
-            const notasInput = document.querySelector(`.notas-input[data-ej-index="${ejIndex}"]`);
-            const seriesRows = document.querySelectorAll(`.series-body[data-ej-index="${ejIndex}"] tr`);
+  let mensaje = document.getElementById('mensaje-feedback');
+  if (!mensaje) {
+    mensaje = document.createElement('p');
+    mensaje.id = 'mensaje-feedback';
+    document.querySelector('.form-container').appendChild(mensaje);
+  }
 
-            const series = [];
-            seriesRows.forEach(row => {
-                const kg = parseFloat(row.querySelector('.kg-input').value) || 0;
-                const reps = parseInt(row.querySelector('.reps-input').value) || 0;
-                if (kg > 0 || reps > 0) {
-                    series.push({ peso: kg, reps });
-                }
-            });
+  mensaje.textContent = 'Guardando entrenamiento...';
+  mensaje.style.color = '#3498db';
 
-            return {
-                id: ej.id,
-                notas: notasInput ? notasInput.value : '',
-                series
-            };
-        }).filter(ej => ej.series.length > 0)
-    };
+  const entrenamientoData = {
+    rutina_id: rutinaId,
+    ejercicios: ejerciciosData.map((ej, ejIndex) => {
+      const notasInput = document.querySelector(`.notas-input[data-ej-index="${ejIndex}"]`);
+      const seriesRows = document.querySelectorAll(`.series-body[data-ej-index="${ejIndex}"] tr`);
 
-    try {
-        const response = await fetch('/api/entrenamientos/guardar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(entrenamientoData)
-        });
+      const series = [];
+      seriesRows.forEach(row => {
+        const kg = parseFloat(row.querySelector('.kg-input').value) || 0;
+        const reps = parseInt(row.querySelector('.reps-input').value) || 0;
+        const completada = row.querySelector('.serie-completada').checked;
 
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Entrenamiento guardado con éxito');
-            window.location.href = '/';
-        } else {
-            alert(result.error || 'Error al guardar');
+        if (kg > 0 || reps > 0 || completada) {
+          series.push({ peso: kg, reps, completada });
         }
-    } catch (err) {
-        alert('Error de conexión');
+      });
+
+      return {
+        id: ej.id,
+        notas: notasInput ? notasInput.value.trim() : '',
+        series
+      };
+    }).filter(ej => ej.series.length > 0)
+  };
+
+  try {
+    const response = await fetch('/api/entrenamientos/guardar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entrenamientoData)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      mensaje.style.color = '#2ecc71';
+      mensaje.textContent = '¡Entrenamiento guardado con éxito! Redirigiendo...';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+    } else {
+      mensaje.style.color = '#e74c3c';
+      mensaje.textContent = result.error || 'Error al guardar el entrenamiento';
     }
+  } catch (err) {
+    console.error('Error:', err);
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Error de conexión al guardar';
+  }
 });
+
+function mostrarMensajeFeedback(texto, tipo = 'success') {
+  let feedback = document.getElementById('mensaje-feedback');
+  if (!feedback) {
+    feedback = document.createElement('p');
+    feedback.id = 'mensaje-feedback';
+    document.querySelector('.form-container').appendChild(feedback);
+  }
+
+  feedback.textContent = texto;
+  feedback.style.backgroundColor = tipo === 'success' ? '#2ecc71' : '#e74c3c';
+  feedback.style.color = 'white';
+  feedback.style.padding = '16px';
+  feedback.style.borderRadius = '12px';
+  feedback.style.marginTop = '20px';
+  feedback.style.textAlign = 'center';
+  feedback.style.fontWeight = 'bold';
+  feedback.style.opacity = '1';
+  feedback.style.transition = 'opacity 0.3s ease';
+
+  clearTimeout(feedback.timeout);
+  feedback.timeout = setTimeout(() => {
+    feedback.style.opacity = '0';
+    setTimeout(() => feedback.remove(), 300);
+  }, 3000);
+}
 </script>
 
 <%- include('../partials/footer') %>

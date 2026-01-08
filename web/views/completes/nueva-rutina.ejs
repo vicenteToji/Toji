@@ -2,32 +2,50 @@
 <%- include('../partials/navbar') %>
 
 <main class="content">
-    <div class="header-section">
-        <h1>Crear Nueva Rutina</h1>
-    </div>
+  <div class="form-container">
+    <h1 class="page-title">Crear Nueva Rutina</h1>
 
-    <form id="form-nueva-rutina">
-        <div class="form-group">
-            <label for="nombre">Nombre de la rutina</label>
-            <input type="text" id="nombre" name="nombre" required placeholder="Ej: Push Día A">
+    <form id="form-nueva-rutina" class="exercise-form">
+      <div class="form-group">
+        <label for="nombre">Nombre de la rutina</label>
+        <input 
+          type="text" 
+          id="nombre" 
+          name="nombre" 
+          placeholder="Ej: Push Día A" 
+          required 
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción <span class="optional">(Opcional)</span></label>
+        <textarea 
+          id="descripcion" 
+          name="descripcion" 
+          rows="4" 
+          placeholder="Ej: Rutina de empuje enfocada en pecho y tríceps"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Añade ejercicios de tu biblioteca</label>
+        <div id="lista-ejercicios-rutina" class="ejercicios-checkbox-list">
+          <p class="loading-text">Cargando tus ejercicios...</p>
         </div>
+      </div>
 
-        <div class="form-group">
-            <label for="descripcion">Descripción (opcional)</label>
-            <textarea id="descripcion" name="descripcion" rows="3" placeholder="Ej: Rutina de empuje enfocada en pecho y tríceps"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Añade ejercicios de tu biblioteca</label>
-            <div id="lista-ejercicios-rutina">
-                <p style="text-align:center; color:#666;">Cargando tus ejercicios...</p>
-            </div>
-        </div>
-
-        <button type="submit" class="btn-primary">Crear Rutina</button>
+      <div class="button-group">
+        <button type="submit" class="btn-primary-large">
+          Crear Rutina
+        </button>
+        <a href="/rutinas" class="btn-secondary-large">
+          Cancelar
+        </a>
+      </div>
     </form>
 
-    <div id="mensaje" style="margin-top: 20px; text-align: center; font-weight: bold; font-size: 1.1em;"></div>
+    <div id="mensaje-feedback"></div>
+  </div>
 </main>
 
 <script>
@@ -35,89 +53,97 @@ const API_EJERCICIOS = '/api/ejercicios';
 const API_RUTINAS = '/api/rutinas';
 
 async function cargarEjerciciosParaRutina() {
-    const contenedor = document.getElementById('lista-ejercicios-rutina');
+  const contenedor = document.getElementById('lista-ejercicios-rutina');
 
-    try {
-        const res = await fetch(API_EJERCICIOS);
-        if (!res.ok) throw new Error('Error al cargar ejercicios');
-        const ejercicios = await res.json();
+  try {
+    const res = await fetch(API_EJERCICIOS);
+    if (!res.ok) throw new Error('Error al cargar ejercicios');
+    const ejercicios = await res.json();
 
-        contenedor.innerHTML = '';
+    contenedor.innerHTML = '';
 
-        if (ejercicios.length === 0) {
-            contenedor.innerHTML = '<p style="text-align:center;">No tienes ejercicios aún. <a href="/ejercicios/nuevo">Añade uno</a></p>';
-            return;
-        }
-
-        ejercicios.forEach(ej => {
-            const div = document.createElement('div');
-            div.style = 'margin: 15px 0; padding: 12px; background: #222; border-radius: 8px;';
-            div.innerHTML = `
-                <label style="display: block; cursor: pointer; color: #fff;">
-                    <input type="checkbox" value="${ej.id}" style="margin-right: 12px; transform: scale(1.2);">
-                    <strong>${ej.nombre}</strong> - ${ej.grupo_muscular || 'Sin grupo'}
-                    <small style="display: block; color: #aaa; margin-left: 28px;">
-                        ${ej.descripcion || 'Sin descripción'}
-                        ${ej.equipo ? ' · Equipo: ' + ej.equipo : ''}
-                    </small>
-                </label>
-            `;
-            contenedor.appendChild(div);
-        });
-    } catch (err) {
-        contenedor.innerHTML = '<p style="color:red; text-align:center;">Error al cargar ejercicios. Recarga la página.</p>';
+    if (ejercicios.length === 0) {
+      contenedor.innerHTML = '<p class="empty-message">No tienes ejercicios aún. <a href="/ejercicios/nuevo">Añade uno aquí</a></p>';
+      return;
     }
+
+    ejercicios.forEach(ej => {
+      const div = document.createElement('div');
+      div.className = 'checkbox-item';
+      div.innerHTML = `
+        <label class="checkbox-label">
+          <input type="checkbox" value="${ej.id}">
+          <span class="checkmark"></span>
+          <div class="ejercicio-info">
+            <strong>${ej.nombre}</strong>
+            <span class="grupo">${ej.grupo_muscular || 'Sin grupo'}</span>
+            <small>${ej.descripcion || 'Sin descripción'}${ej.equipo ? ' · Equipo: ' + ej.equipo : ''}</small>
+          </div>
+        </label>
+      `;
+      contenedor.appendChild(div);
+    });
+  } catch (err) {
+    console.error('Error al cargar ejercicios:', err);
+    contenedor.innerHTML = '<p class="error-text">Error al cargar ejercicios. Recarga la página.</p>';
+  }
 }
 
 document.getElementById('form-nueva-rutina').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const mensaje = document.getElementById('mensaje');
-    mensaje.textContent = 'Creando rutina...';
-    mensaje.style.color = '#666';
+  let mensaje = document.getElementById('mensaje-feedback');
+  if (!mensaje) {
+    mensaje = document.createElement('p');
+    mensaje.id = 'mensaje-feedback';
+    document.querySelector('.form-container').appendChild(mensaje);
+  }
 
-    const nombre = document.getElementById('nombre').value.trim();
-    const descripcion = document.getElementById('descripcion').value.trim();
-    const checkboxes = document.querySelectorAll('#lista-ejercicios-rutina input[type="checkbox"]:checked');
-    const ejercicios = Array.from(checkboxes).map(cb => parseInt(cb.value));
+  mensaje.textContent = 'Creando rutina...';
+  mensaje.style.color = '#3498db';
 
-    if (!nombre) {
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'El nombre es obligatorio';
-        return;
+  const nombre = document.getElementById('nombre').value.trim();
+  const descripcion = document.getElementById('descripcion').value.trim() || null;
+  const checkboxes = document.querySelectorAll('#lista-ejercicios-rutina input[type="checkbox"]:checked');
+  const ejercicios = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+  if (!nombre) {
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'El nombre de la rutina es obligatorio.';
+    return;
+  }
+
+  if (ejercicios.length === 0) {
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Selecciona al menos un ejercicio.';
+    return;
+  }
+
+  try {
+    const response = await fetch(API_RUTINAS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, descripcion, ejercicios })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      mensaje.style.color = '#2ecc71';
+      mensaje.textContent = '¡Rutina creada con éxito! Redirigiendo...';
+      document.getElementById('form-nueva-rutina').reset();
+      setTimeout(() => {
+        window.location.href = '/rutinas';
+      }, 1500);
+    } else {
+      mensaje.style.color = '#e74c3c';
+      mensaje.textContent = result.error || 'Error al crear la rutina.';
     }
-
-    if (ejercicios.length === 0) {
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'Selecciona al menos un ejercicio';
-        return;
-    }
-
-    try {
-        const response = await fetch(API_RUTINAS, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, descripcion, ejercicios })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            mensaje.style.color = 'green';
-            mensaje.textContent = '¡Rutina creada con éxito! Redirigiendo...';
-            document.getElementById('form-nueva-rutina').reset();
-            setTimeout(() => {
-                window.location.href = '/rutinas';
-            }, 1500);
-        } else {
-            mensaje.style.color = 'red';
-            mensaje.textContent = result.error || 'Error al crear la rutina';
-        }
-    } catch (err) {
-        console.error('Error de conexión:', err);
-        mensaje.style.color = 'red';
-        mensaje.textContent = 'Error de conexión. Recarga la página o verifica la API.';
-    }
+  } catch (err) {
+    console.error('Error:', err);
+    mensaje.style.color = '#e74c3c';
+    mensaje.textContent = 'Error de conexión. Intenta de nuevo.';
+  }
 });
 
 cargarEjerciciosParaRutina();
